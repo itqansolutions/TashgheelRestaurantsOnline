@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="products">Products - POS</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="language-switcher">
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="ar">AR</button>
+  </div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-header" data-i18n="products">Products</div>
+        <nav>
+        <a href="pos.html" class="nav-item" data-i18n="nav_pos">🛒 Point of Sale</a>
+        <a href="products.html" class="nav-item active" data-i18n="nav_products">📦 Products</a>
+        <a href="receipts.html" class="nav-item" data-i18n="nav_receipts">🧾 Receipts</a>
+        <a href="reports.html" class="nav-item" data-i18n="nav_reports">📈 Reports</a>
+	<a href="salesmen.html" class="nav-item" data-i18n="nav_salesmen">🧑‍💼 Salesmen</a>
+<a href="expenses.html" class="nav-item" data-i18n="nav_expenses">📋 Expenses</a>
+
+
+        <a href="admin.html" class="nav-item"  data-i18n="nav_admin">⚙️ Admin Panel</a>
+	<a href="backup.html" class="nav-item" data-i18n="nav_reports">💾 BackUP</a>
+      </nav>
+
+
+      <div class="sidebar-footer">Tashgheel POS</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 data-i18n="products">Products</h1>
+      </header>
+
+      <section class="content-area">
+        <div class="card">
+          <div class="card-header" data-i18n="add_product">Add Product</div>
+          <div class="card-body">
+            <form id="product-form" class="form-grid">
+              <div class="form-group">
+                <label for="product-code" data-i18n="product_code">Product Code:</label>
+                <input type="text" id="product-code" required>
+              </div>
+
+              <div class="form-group">
+                <label for="product-name" data-i18n="product_name">Product Name:</label>
+                <input type="text" id="product-name" required>
+              </div>
+
+              <div class="form-group">
+                <label for="product-category" data-i18n="category">Category:</label>
+                <select id="product-category"></select>
+              </div>
+
+              <div class="form-group">
+                <label for="product-barcode" data-i18n="barcode">Barcode (optional):</label>
+                <input type="text" id="product-barcode">
+              </div>
+
+              <div class="form-group">
+                <label for="product-price" data-i18n="price">Price:</label>
+                <input type="number" id="product-price" step="0.01" required>
+              </div>
+
+              <div class="form-group">
+                <label for="product-cost" data-i18n="cost">Cost:</label>
+                <input type="number" id="product-cost" step="0.01">
+              </div>
+
+              <div class="form-group">
+                <label for="product-stock" data-i18n="stock">Stock:</label>
+                <input type="number" id="product-stock" min="0">
+              </div>
+
+              <div class="form-group">
+                <button type="submit" class="btn btn-success" data-i18n="add_product">Add Product</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header" data-i18n="product_list">Product List</div>
+          <div class="card-body">
+            <button onclick="openStockAudit()" class="btn btn-warning mb-10" data-i18n="stock_audit_btn">📋 Stock Audit</button>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="product_code">Code</th>
+                  <th data-i18n="product">Product</th>
+                  <th data-i18n="barcode">Barcode</th>
+                  <th data-i18n="category">Category</th>
+                  <th data-i18n="price">Price</th>
+                  <th data-i18n="cost">Cost</th>
+                  <th data-i18n="stock">Stock</th>
+                  <th data-i18n="actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="product-table-body">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header" data-i18n="manage_categories">Manage Categories</div>
+          <div class="card-body">
+            <form id="category-form" class="form-grid">
+              <div class="form-group">
+                <label for="new-category" data-i18n="new_category">New Category:</label>
+                <input type="text" id="new-category" required>
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn btn-primary" data-i18n="add_category">Add Category</button>
+              </div>
+            </form>
+            <ul id="category-list" class="mt-20"></ul>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    Tashgheel POS© 2025 - Designed and developed by <strong>itqan</strong> |
+    <a href="tel:+201126522373">+201126522373 / +201155253886</a>
+  </footer>
+
+  <!-- Stock Audit Modal -->
+  <div id="auditModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 data-i18n="stock_audit">Stock Audit</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th data-i18n="product_code">Code</th>
+            <th data-i18n="product">Product</th>
+            <th data-i18n="stock">Recorded</th>
+            <th data-i18n="actual_stock">Actual</th>
+            <th data-i18n="difference">Difference</th>
+          </tr>
+        </thead>
+        <tbody id="auditTableBody"></tbody>
+      </table>
+      <div style="margin-top: 10px; text-align: right;">
+        <button onclick="saveStockAudit()" class="btn btn-success" data-i18n="save">✅ Save</button>
+        <button onclick="closeStockAudit()" class="btn btn-danger" data-i18n="cancel">❌ Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/products-app.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser?.role === 'cashier') {
+      alert('Access denied');
+      window.location.href = 'pos.html';
+      return;
+    }
+
+    // Language handling
+    const lang = localStorage.getItem('pos_language') || 'en';
+    setLanguage(lang);
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const selectedLang = btn.dataset.lang;
+        localStorage.setItem('pos_language', selectedLang);
+        setLanguage(selectedLang);
+      });
+    });
+  });
+
+  function setLanguage(lang) {
+    document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    const t = {
+      products: { en: 'Products', ar: 'المنتجات' },
+      add_product: { en: 'Add Product', ar: 'إضافة منتج' },
+      product_code: { en: 'Product Code:', ar: 'كود المنتج:' },
+      product_name: { en: 'Product Name:', ar: 'اسم المنتج:' },
+      category: { en: 'Category:', ar: 'الفئة:' },
+      barcode: { en: 'Barcode (optional):', ar: 'الباركود (اختياري):' },
+      price: { en: 'Price:', ar: 'السعر:' },
+      cost: { en: 'Cost:', ar: 'التكلفة:' },
+      stock: { en: 'Stock:', ar: 'الكمية:' },
+      actions: { en: 'Actions', ar: 'الإجراءات' },
+      product_list: { en: 'Product List', ar: 'قائمة المنتجات' },
+      manage_categories: { en: 'Manage Categories', ar: 'إدارة الفئات' },
+      new_category: { en: 'New Category:', ar: 'فئة جديدة:' },
+      add_category: { en: 'Add Category', ar: 'إضافة فئة' },
+      save: { en: '✅ Save', ar: '✅ حفظ' },
+      cancel: { en: '❌ Close', ar: '❌ إغلاق' },
+      nav_pos: { en: '🛒 Point of Sale', ar: '🛒 نقطة البيع' },
+      nav_products: { en: '📦 Products', ar: '📦 المنتجات' },
+      nav_receipts: { en: '🧾 Receipts', ar: '🧾 الفواتير' },
+      nav_reports: { en: '📈 Reports', ar: '📈 التقارير' },
+      nav_admin: { en: '⚙️ Admin Panel', ar: '⚙️ لوحة التحكم' },
+nav_salesmen: { en: '🧑‍💼 Salesmen', ar: '🧑‍💼 البائعون' },
+nav_expenses: { en: '📋 Expenses', ar: '📋 المصاريف' },
+
+      stock_audit_btn: { en: '📋 Stock Audit', ar: '📋 جرد المخزون' },
+      stock_audit: { en: 'Stock Audit', ar: 'جرد المخزون' },
+      actual_stock: { en: 'Actual', ar: 'الفعلي' },
+      difference: { en: 'Difference', ar: 'الفرق' },
+      product: { en: 'Product', ar: 'المنتج' }
+    };
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) {
+        el.textContent = t[key][lang];
+      }
+    });
+  }
+</script>
+</body>
+</html>

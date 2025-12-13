@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasgheel POS System</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: #fff; padding: 20px; border-radius: 8px; width: 300px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3); text-align: center;
+    }
+    .cart-item button {
+      margin-left: 10px;
+      padding: 4px 6px;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- License Check -->
+<div id="licenseCheckOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000000e6;z-index:10000;color:white;text-align:center;padding-top:150px;">
+  <h2>🔒 Access Denied</h2>
+  <p>This system requires a valid license to operate.</p>
+  <button onclick="window.location.href='index.html'" class="btn btn-primary" style="margin-top: 20px;">Go to Activation</button>
+</div>
+
+<!-- Language Switcher -->
+<div class="language-switcher">
+  <button class="lang-btn" onclick="setLanguage('en')" id="langEn">English</button>
+  <button class="lang-btn" onclick="setLanguage('ar')" id="langAr">العربية</button>
+</div>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2 id="posSystemTitle">🏪Tasgheel POS System</h2>
+      <p id="licensedVersion">Enhanced Edition</p>
+    </div>
+      <nav>
+        <a href="pos.html" class="nav-item active" data-i18n="nav_pos">🛒 Point of Sale</a>
+        <a href="products.html" class="nav-item" data-i18n="nav_products">📦 Products</a>
+        <a href="receipts.html" class="nav-item" data-i18n="nav_receipts">🧾 Receipts</a>
+        <a href="reports.html" class="nav-item" data-i18n="nav_reports">📈 Reports</a>
+	<a href="salesmen.html" class="nav-item" data-i18n="nav_salesmen">🧑‍💼 Salesmen</a>
+	<a href="expenses.html" class="nav-item" data-i18n="nav_Expenses">📋 Expenses</a>
+
+        <a href="admin.html" class="nav-item"  data-i18n="nav_admin">⚙️ Admin Panel</a>
+	<a href="backup.html" class="nav-item" data-i18n="nav_backup">💾 BackUP</a>
+      </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn btn-danger" onclick="confirmLogout()" id="logoutBtn">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="top-bar">
+      <h1 id="pageTitle">Point of Sale</h1>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="welcomeText">Welcome,</span>
+        <span id="currentUserName">User</span>
+        <span id="userRole" class="user-role">cashier</span>
+        <span style="background:#27ae60;color:white;padding:4px 8px;border-radius:12px;font-size:0.7rem;">🔐 Licensed</span>
+      </div>
+    </header>
+
+    <section class="content-area">
+      <div class="pos-layout">
+        <!-- Products Section -->
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <span id="productsTitle">Products</span>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="text" id="productSearch" placeholder="Search by name, code, or barcode..." class="search-box" style="width:200px;">
+                <button class="btn btn-secondary" onclick="scanBarcode()" id="scanBtn">📷 Scan</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="product-grid" id="productGrid">
+                <div style="text-align:center;padding:40px;color:#666;">
+                  <p id="loadingText">Loading products...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="cart">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 id="cartTitle">🛒 Cart</h3>
+            <span id="cartCounter" class="badge">0</span>
+          </div>
+
+          <div id="cartItems">
+            <p id="cartEmptyText" style="text-align:center;color:#666;">Cart is empty</p>
+          </div>
+
+          <div class="cart-summary">
+            <div><span id="subtotalLabel">Subtotal:</span> <span id="cartSubtotal">0.00 ج.م</span></div>
+            <div><span id="discountLabel">Discount:</span> <span id="cartDiscount">0.00 ج.م</span></div>
+            <div><span id="taxLabel">Tax (0%):</span> <span id="cartTax">0.00 ج.م</span></div>
+            <hr>
+            <div class="cart-total" id="cartTotal">Total: 0.00 ج.م</div>
+          </div>
+
+          <div style="margin-bottom:10px;">
+            <label for="salesmanSelect">👤 <span id="salesmanLabel">Salesman:</span></label>
+            <select id="salesmanSelect" style="width:100%;padding:6px;margin-top:5px;"></select>
+          </div>
+
+          <div class="payment-methods">
+            <button class="btn btn-success" onclick="processSale('cash')" id="cashBtn" disabled>💵 Cash</button>
+            <button class="btn btn-success" onclick="processSale('card')" id="cardBtn" disabled>💳 Card</button>
+            <button class="btn btn-success" onclick="processSale('mobile')" id="mobileBtn" disabled>📱 Mobile</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+            <button class="btn btn-warning" onclick="holdTransaction()" id="holdBtn" disabled>⏸️ Hold</button>
+            <button class="btn btn-secondary" onclick="clearCart()" id="clearCartBtn" disabled>🗑️ Clear</button>
+          </div>
+
+          <button class="btn btn-info" onclick="closeDay()" style="margin-top:10px;width:100%;">🧾 <span id="closeDayBtn">Close Day</span></button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Close Day Modal -->
+<div id="closeDayModal" class="modal" style="display:none;">
+  <div class="modal-content" style="width:400px;">
+    <h3 id="daySummaryTitle">📊 Day Summary</h3>
+    <div id="daySummaryContent" style="text-align:left;margin-top:10px;"></div>
+    <br>
+    <button onclick="window.print()" class="btn btn-primary">🖨️ <span id="printBtn">Print</span></button>
+    <button onclick="document.getElementById('closeDayModal').style.display='none'" class="btn btn-danger">✖️ <span id="cancelBtn">Close</span></button>
+  </div>
+</div>
+
+<!-- Discount Modal -->
+<div id="discountModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3 id="discountTitle">🧾 خصم</h3>
+    <label>نوع الخصم:</label>
+    <select id="discountType">
+      <option value="none">لا يوجد</option>
+      <option value="percent">نسبة مئوية (%)</option>
+      <option value="value">قيمة ثابتة (ج.م)</option>
+    </select>
+    <br><br>
+    <label>القيمة:</label>
+    <input type="number" id="discountValue" placeholder="0">
+    <br><br>
+    <button onclick="saveDiscount()">💾 حفظ</button>
+    <button onclick="closeDiscountModal()">✖️ إلغاء</button>
+  </div>
+</div>
+
+<!-- Footer -->
+  <footer class="footer">
+    Tashgheel POS© 2025</strong> |
+    <a href="tel:+201126522373">+201126522373 / +201155253886</a>
+ 	<span id="footerText">Designed and developed by itqan</span>
+  </footer>
+
+<!-- Scripts -->
+<script src="js/auth.js"></script>
+<script src="js/backup-system.js"></script>
+<script src="js/pos-app.js"></script>
+
+<!-- Translations -->
+<script>
+  const translations = {
+    en: {
+      posSystemTitle: "🏪 POS System",
+      licensedVersion: "Enhanced Edition",
+      pageTitle: "Point of Sale",
+      welcomeText: "Welcome,",
+      logoutBtn: "Logout",
+      backupBtn: "💾 Backup",
+      productsTitle: "Products",
+      scanBtn: "📷 Scan",
+      cartTitle: "🛒 Cart",
+      cartEmptyText: "Cart is empty",
+      subtotalLabel: "Subtotal:",
+      discountLabel: "Discount:",
+      taxLabel: "Tax (0%):",
+      cashBtn: "💵 Cash",
+      cardBtn: "💳 Card",
+      mobileBtn: "📱 Mobile",
+      holdBtn: "⏸️ Hold",
+
+
+
+      clearCartBtn: "🗑️ Clear",
+      discountTitle: "🧾 Discount",
+      closeDayBtn: "Close Day",
+      daySummaryTitle: "📊 Day Summary",
+      printBtn: "Print",
+      cancelBtn: "Close",
+      salesmanLabel: "Salesman:",
+      footerText: "Designed and developed by itqan",
+
+      nav_pos: "🛒 Point of Sale",
+      nav_products: "📦 Products",
+      nav_receipts: "🧾 Receipts",
+      nav_reports: "📈 Reports",
+      nav_salesmen: "🧑‍💼 Salesmen",
+      nav_Expenses: "📋 Expenses",
+      nav_admin: "⚙️ Admin Panel",
+nav_backup: "💾 Backup"
+
+    },
+    ar: {
+      posSystemTitle: "🏪 نظام نقاط البيع",
+      licensedVersion: "الإصدار المحسن",
+      pageTitle: "شاشة البيع",
+      welcomeText: "مرحبًا،",
+      logoutBtn: "تسجيل الخروج",
+      backupBtn: "💾 نسخ احتياطي",
+      productsTitle: "المنتجات",
+      scanBtn: "📷 مسح",
+      cartTitle: "🛒 السلة",
+      cartEmptyText: "السلة فارغة",
+      subtotalLabel: "الإجمالي الفرعي:",
+      discountLabel: "الخصم:",
+      taxLabel: "الضريبة (٠٪):",
+      cashBtn: "💵 نقدي",
+      cardBtn: "💳 بطاقة",
+      mobileBtn: "📱 موبايل",
+      holdBtn: "⏸️ تعليق",
+      clearCartBtn: "🗑️ مسح",
+      discountTitle: "🧾 خصم",
+      closeDayBtn: "إقفال اليومية",
+      daySummaryTitle: "📊 ملخص اليوم",
+      printBtn: "طباعة",
+      cancelBtn: "إغلاق",
+      salesmanLabel: "البائع:",
+      footerText: "تم التصميم والتطوير بواسطة itqan",
+
+    nav_pos: "🛒 نقطة البيع",
+      nav_products: "📦 المنتجات",
+      nav_receipts: "🧾 الفواتير",
+      nav_reports: "📈 التقارير",
+      nav_salesmen: "🧑‍💼 البائعون",
+      nav_Expenses: "📋 المصاريف",
+      nav_admin: "⚙️ لوحة التحكم",
+nav_backup: "💾 النسخ الاحتياطي"
+
+    }
+  };
+
+  function setLanguage(lang) {
+    localStorage.setItem('pos_language', lang);
+    applyTranslations();
+  }
+
+ function applyTranslations() {
+  const lang = localStorage.getItem('pos_language') || 'en';
+  const t = translations[lang];
+
+  // 1. ترجمة العناصر حسب ID
+  for (const key in t) {
+    const el = document.getElementById(key);
+    if (el) el.textContent = t[key];
+  }
+
+  // 2. ترجمة العناصر اللي عندها data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+
+  // 3. ضبط اتجاه الصفحة
+  const isRTL = lang === 'ar';
+  document.documentElement.setAttribute("dir", isRTL ? 'rtl' : 'ltr');
+  document.documentElement.setAttribute("lang", lang);
+
+  // 4. ضبط اتجاه بعض العناصر يدويًا
+  document.querySelectorAll('.card-header, .top-bar, .modal-content, .cart-summary, .sidebar, .pos-layout, label, input, select, textarea').forEach(el => {
+    el.style.textAlign = isRTL ? 'right' : 'left';
+  });
+
+  // 5. عكس اتجاه Flex layout لو موجود
+  document.querySelectorAll('[style*="display:flex"]').forEach(el => {
+    el.style.flexDirection = isRTL ? 'row-reverse' : 'row';
+  });
+
+
+}
+
+
+  document.addEventListener('DOMContentLoaded', applyTranslations);
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProducts();
+  });
+</script>
+</body>
+</html>

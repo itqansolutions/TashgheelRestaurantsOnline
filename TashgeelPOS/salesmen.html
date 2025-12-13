@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title data-i18n-key="salesmen" data-i18n-ar="البائعون">Salesmen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/salesmen-app.css">
+  <script src="js/salesmen-app.js" defer></script>
+</head>
+<body>
+  <div class="language-switcher">
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="ar">AR</button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-header" data-i18n-key="salesmen" data-i18n-ar="البائعون">Salesmen</div>
+    <nav>
+ <a href="pos.html" class="nav-item" data-i18n="nav_pos" data-i18n-ar="نقطة البيع">🛒 Point of Sale</a>
+<a href="products.html" class="nav-item" data-i18n="nav_products" data-i18n-ar="المنتجات">📦 Products</a>
+<a href="receipts.html" class="nav-item" data-i18n="nav_receipts" data-i18n-ar="الفواتير">🧾 Receipts</a>
+<a href="reports.html" class="nav-item" data-i18n="nav_reports" data-i18n-ar="التقارير">📈 Reports</a>
+<a href="salesmen.html" class="nav-item active" data-i18n="nav_salesmen" data-i18n-ar="البائعون">🧑‍💼 Salesmen</a>
+<a href="expenses.html" class="nav-item" data-i18n="nav_expenses" data-i18n-ar="المصاريف">📋 Expenses</a>
+<a href="admin.html" class="nav-item" data-i18n="nav_admin" data-i18n-ar="لوحة التحكم">⚙️ Admin Panel</a>
+<a href="backup.html" class="nav-item" data-i18n="nav_backup" data-i18n-ar="النسخ الاحتياطي">💾 Backup</a>
+
+
+</nav>
+
+
+
+      <div class="sidebar-footer">Ali Karam POS</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 data-i18n-key="salesmen" data-i18n-ar="البائعون">Salesmen</h1>
+      </header>
+
+      <section class="content-area">
+
+        <!-- Section 1: Add Salesman -->
+        <form id="salesman-form" class="card">
+          <h2 data-i18n-key="add_salesman" data-i18n-ar="إضافة بائع">➕ Add Salesman</h2>
+          <div class="form-group">
+            <label for="salesman-name" data-i18n-key="salesman_name" data-i18n-ar="اسم البائع">Salesman Name</label>
+            <input type="text" id="salesman-name" required />
+          </div>
+          <button type="submit" class="btn btn-primary" data-i18n-key="save" data-i18n-ar="حفظ">💾 Save</button>
+        </form>
+
+        <div class="card mt-20">
+          <h2 data-i18n-key="salesmen_list" data-i18n-ar="قائمة البائعين">📋 Salesmen List</h2>
+          <table class="report-table" id="salesmen-table">
+            <thead>
+              <tr>
+                <th data-i18n-key="name" data-i18n-ar="الاسم">Name</th>
+                <th data-i18n-key="actions" data-i18n-ar="إجراءات">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="salesmen-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Section 2: Monthly Target -->
+        <form id="target-form" class="card mt-20">
+          <h2 data-i18n-key="add_target" data-i18n-ar="تحديد هدف شهري">🎯 Set Monthly Target</h2>
+          <div class="form-group">
+            <label for="target-salesman" data-i18n-key="salesman" data-i18n-ar="البائع">Salesman</label>
+            <select id="target-salesman" required></select>
+          </div>
+          <div class="form-group">
+            <label for="target-month" data-i18n-key="month" data-i18n-ar="الشهر">Month</label>
+            <select id="target-month" required></select>
+          </div>
+          <div class="form-group">
+            <label for="target-year" data-i18n-key="year" data-i18n-ar="السنة">Year</label>
+            <select id="target-year" required></select>
+          </div>
+          <div class="form-group">
+            <label for="target-value" data-i18n-key="target" data-i18n-ar="الهدف">Target (EGP)</label>
+            <input type="number" id="target-value" min="0" required />
+          </div>
+          <button type="submit" class="btn btn-primary" data-i18n-key="save" data-i18n-ar="حفظ">💾 Save</button>
+        </form>
+
+        <div class="card mt-20">
+          <h2 data-i18n-key="monthly_targets" data-i18n-ar="الأهداف الشهرية">📆 Monthly Targets</h2>
+          <table class="report-table" id="monthly-targets-table">
+            <thead>
+              <tr>
+                <th data-i18n-key="salesman" data-i18n-ar="البائع">Salesman</th>
+                <th data-i18n-key="month" data-i18n-ar="الشهر">Month</th>
+                <th data-i18n-key="year" data-i18n-ar="السنة">Year</th>
+                <th data-i18n-key="target" data-i18n-ar="الهدف">Target</th>
+              </tr>
+            </thead>
+            <tbody id="monthly-targets-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Section 3: Monthly Performance -->
+        <div class="card mt-20">
+          <h2 data-i18n-key="performance" data-i18n-ar="الأداء الشهري">📊 Monthly Performance</h2>
+          <table class="report-table" id="salesmen-performance-table">
+            <thead>
+              <tr>
+                <th data-i18n-key="salesman" data-i18n-ar="البائع">Salesman</th>
+                <th data-i18n-key="month" data-i18n-ar="الشهر">Month</th>
+                <th data-i18n-key="year" data-i18n-ar="السنة">Year</th>
+                <th data-i18n-key="target" data-i18n-ar="الهدف">Target</th>
+                <th data-i18n-key="achieved" data-i18n-ar="المحقق">Achieved</th>
+                <th data-i18n-key="percentage" data-i18n-ar="النسبة">%</th>
+              </tr>
+            </thead>
+            <tbody id="salesmen-performance-body"></tbody>
+          </table>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    Tashgheel POS© 2025</strong> |
+    <a href="tel:+201126522373">+201126522373 / +201155253886</a>
+ 	<span id="footerText">Designed and developed by itqan</span>
+  </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (currentUser?.role === 'cashier') {
+        alert('Access denied');
+        window.location.href = 'pos.html';
+      }
+    });
+  </script>
+<script>
+function setLanguage(lang) {
+  document.body.classList.toggle('rtl', lang === 'ar');
+  localStorage.setItem('pos_language', lang);
+
+  document.querySelectorAll('[data-i18n], [data-i18n-key]').forEach(el => {
+    const key = el.getAttribute('data-i18n') || el.getAttribute('data-i18n-key');
+    const ar = el.getAttribute('data-i18n-ar');
+    const icon = el.innerHTML.match(/^[^A-Za-z0-9\u0600-\u06FF]+/)?.[0] || '';
+
+    if (lang === 'ar' && ar) {
+      el.innerHTML = icon + ' ' + ar;
+    } else if (lang === 'en') {
+      const formatted = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      el.innerHTML = icon + ' ' + formatted;
+    }
+  });
+}
+
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const lang = localStorage.getItem('pos_language') || 'en';
+    setLanguage(lang);
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setLanguage(btn.dataset.lang);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
+

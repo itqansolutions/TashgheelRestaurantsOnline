@@ -1,0 +1,255 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tashgeel POS System</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+</head>
+
+<body>
+  <!-- Language Switcher -->
+  <div class="language-switcher">
+    <button class="lang-btn" onclick="setLanguage('en')" id="langEn">English</button>
+    <button class="lang-btn" onclick="setLanguage('ar')" id="langAr">العربية</button>
+  </div>
+
+  <!-- Login Screen -->
+  <div class="login-screen">
+    <div class="license-container">
+      <div class="version-badge">ENHANCED</div>
+      <div class="pos-logo">🏪</div>
+      <h1 id="loginTitle">Tasgheel POS System</h1>
+      <p class="subtitle" id="subtitle">Powered by itqan</p>
+
+      <!-- Activation Status -->
+      <div id="activationStatus" class="activation-status not-activated">
+        <span id="statusText">System Not Activated</span>
+      </div>
+      
+      <!-- License Activation Form -->
+      <div id="licenseForm">
+        <h3 id="activationTitle">System Activation Required</h3>
+        <div class="form-group">
+          <label id="licenseKeyLabel">License Key:</label>
+          <input type="text" id="licenseKey" placeholder="Enter your license key">
+        </div>
+        <div class="form-group">
+          <label id="businessNameLabel">Business Name:</label>
+          <input type="text" id="businessName" placeholder="Enter your business name">
+        </div>
+        <button type="button" class="btn btn-primary" onclick="activateLicense()" id="activateBtn">🔑 Activate License</button>
+        <div id="licenseError" class="error"></div>
+      </div>
+
+      <!-- License Info (shown when activated) -->
+      <div id="licenseInfo" class="license-info hidden">
+        <h4 id="licenseInfoTitle">License Information</h4>
+        <p><strong id="businessLabel">Business:</strong> <span id="businessDisplay"></span></p>
+        <p><strong id="activatedLabel">Activated:</strong> <span id="activationDate"></span></p>
+        <p><strong id="statusLabel">Status:</strong> <span style="color: #27ae60;">✅ Active</span></p>
+      </div>
+
+      <!-- Login Form (shown when activated) -->
+      <form class="login-form hidden" id="loginForm">
+        <div class="form-group">
+          <label id="usernameLabel">Username:</label>
+          <input type="text" id="username" required />
+        </div>
+        <div class="form-group">
+          <label id="passwordLabel">Password:</label>
+          <input type="password" id="password" required />
+        </div>
+        <button type="submit" class="btn btn-success" id="loginBtn">🚀 Launch System</button>
+        <div id="loginError" class="error"></div>
+      </form>
+
+      <!-- Security Features -->
+      <div class="security-notice">
+        <h3 id="securityFeaturesTitle">🔐 Security Features</h3>
+        <ul id="securityFeaturesList">
+          <li id="feature1">One-time license activation</li>
+          <li id="feature2">Encrypted data storage</li>
+          <li id="feature3">Automatic secure backups</li>
+          <li id="feature4">Multi-language support</li>
+          <li id="feature5">Role-based access control</li>
+          <li id="feature6">Receipt printing with logo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+  Tashgheel POS© 2025</strong> |
+    <a href="tel:+201126522373">+201126522373 / +201155253886</a>
+ 	<span id="footerText">Designed and developed by itqan</span>
+
+   
+  </div>
+
+
+
+
+
+  <script src="js/auth.js"></script>
+  <script>
+    const translations = {
+      en: {
+        shopPosSystem: "Tashgeel POS System",
+        enhancedSecurity: "Powered By itqan",
+        username: "Username:",
+        password: "Password:",
+        login: "Launch System",
+        demoAccounts: "Demo Accounts:",
+        activationRequired: "System Activation Required",
+        licenseKey: "License Key:",
+        businessName: "Business Name:",
+        activateLicense: "Activate License",
+        licenseInfo: "License Information",
+        business: "Business:",
+        activated: "Activated:",
+        status: "Status:",
+        securityFeatures: "Security Features",
+        feature1: "One-time license activation",
+        feature2: "Encrypted data storage",
+        feature3: "Automatic secure backups",
+        feature4: "Multi-language support",
+        feature5: "Role-based access control",
+        feature6: "Receipt printing with logo"
+      },
+      ar: {
+        shopPosSystem: "تشغيل",
+        enhancedSecurity: "بواسطة اتقان",
+        username: "اسم المستخدم:",
+        password: "كلمة المرور:",
+        login: "تشغيل النظام",
+        demoAccounts: "حسابات تجريبية:",
+        activationRequired: "مطلوب تفعيل النظام",
+        licenseKey: "مفتاح الترخيص:",
+        businessName: "اسم النشاط التجاري:",
+        activateLicense: "تفعيل الترخيص",
+        licenseInfo: "معلومات الترخيص",
+        business: "النشاط:",
+        activated: "تم التفعيل:",
+        status: "الحالة:",
+        securityFeatures: "مزايا الأمان",
+        feature1: "تفعيل لمرة واحدة فقط",
+        feature2: "تخزين البيانات بشكل مشفر",
+        feature3: "نسخ احتياطية تلقائية",
+        feature4: "دعم متعدد اللغات",
+        feature5: "صلاحيات وصول حسب الدور",
+        feature6: "طباعة الإيصالات بالشعار"
+      }
+    };
+
+    function setLanguage(lang) {
+      localStorage.setItem("pos_language", lang);
+      updateLanguage();
+    }
+
+    function updateLanguage() {
+      const lang = localStorage.getItem("pos_language") || "en";
+      const t = translations[lang];
+      document.body.className = lang === "ar" ? "rtl" : "";
+      document.getElementById("loginTitle").textContent = t.shopPosSystem;
+      document.getElementById("subtitle").textContent = t.enhancedSecurity;
+      document.getElementById("usernameLabel").textContent = t.username;
+      document.getElementById("passwordLabel").textContent = t.password;
+      document.getElementById("loginBtn").textContent = "🚀 " + t.login;
+      document.getElementById("activationTitle").textContent = t.activationRequired;
+      document.getElementById("licenseKeyLabel").textContent = t.licenseKey;
+      document.getElementById("businessNameLabel").textContent = t.businessName;
+      document.getElementById("activateBtn").textContent = "🔑 " + t.activateLicense;
+      document.getElementById("licenseInfoTitle").textContent = t.licenseInfo;
+      document.getElementById("businessLabel").textContent = t.business;
+      document.getElementById("activatedLabel").textContent = t.activated;
+      document.getElementById("statusLabel").textContent = t.status;
+      document.getElementById("securityFeaturesTitle").textContent = "🔐 " + t.securityFeatures;
+      document.getElementById("feature1").textContent = t.feature1;
+      document.getElementById("feature2").textContent = t.feature2;
+      document.getElementById("feature3").textContent = t.feature3;
+      document.getElementById("feature4").textContent = t.feature4;
+      document.getElementById("feature5").textContent = t.feature5;
+      document.getElementById("feature6").textContent = t.feature6;
+      document.getElementById("footerText").textContent = t.enhancedSecurity;
+    }
+
+    function initLogin() {
+      const fingerprintField = document.getElementById('fingerprintDisplay');
+      const license = JSON.parse(localStorage.getItem("pos_license"));
+
+      if (license) {
+        document.getElementById("licenseForm").style.display = "none";
+        document.getElementById("loginForm").classList.remove("hidden");
+        document.getElementById("activationStatus").classList.add("activated");
+        document.getElementById("statusText").textContent = "✅ System Activated";
+        document.getElementById("licenseInfo").classList.remove("hidden");
+        document.getElementById("businessDisplay").textContent = license.business;
+        document.getElementById("activationDate").textContent = new Date(license.activatedAt).toLocaleString();
+        return;
+      }
+
+      if (fingerprintField && window.electronAPI?.getMachineId) {
+        window.electronAPI.getMachineId().then(id => {
+          fingerprintField.value = id;
+          console.log("Machine Fingerprint:", id);
+        }).catch(err => {
+          console.error("Failed to get machine ID:", err);
+        });
+      } else {
+        console.error("electronAPI or fingerprintField not available");
+      }
+
+      updateLanguage();
+    }
+
+    async function activateLicense() {
+      const licenseKey = document.getElementById('licenseKey').value.trim();
+      const businessName = document.getElementById('businessName').value.trim();
+      const licenseError = document.getElementById('licenseError');
+
+      try {
+        const realFingerprint = await window.electronAPI.getMachineId();
+        const result = EnhancedSecurity.activateLicenseWithFingerprint(licenseKey, businessName, realFingerprint);
+
+        if (result.success) {
+          document.getElementById("activationStatus").classList.remove("not-activated");
+          document.getElementById("activationStatus").classList.add("activated");
+          document.getElementById("statusText").textContent = "✅ System Activated";
+
+          document.getElementById("licenseForm").style.display = "none";
+          document.getElementById("licenseInfo").classList.remove("hidden");
+          document.getElementById("businessDisplay").textContent = businessName;
+          document.getElementById("activationDate").textContent = new Date().toLocaleString();
+          document.getElementById("loginForm").classList.remove("hidden");
+        } else {
+          licenseError.textContent = result.error;
+          licenseError.style.color = "red";
+        }
+      } catch (e) {
+        licenseError.textContent = "❌ Failed to retrieve machine fingerprint.";
+        console.error(e);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initLogin();
+      const loginForm = document.getElementById('loginForm');
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const errorDiv = document.getElementById('loginError');
+
+        if (login(username, password)) {
+          window.location.href = 'pos.html';
+        } else {
+          errorDiv.textContent = '❌ Invalid username or password';
+          errorDiv.style.color = 'red';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
