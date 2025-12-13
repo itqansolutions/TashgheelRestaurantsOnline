@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers & Vehicles - Tasgheel POS</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Specific styles for Customer Page */
+    .customer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .customer-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      position: relative;
+    }
+
+    .customer-card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .customer-card p {
+      color: #666;
+      margin: 5px 0;
+    }
+
+    .vehicle-badge {
+      background: #eef2f7;
+      color: #2c3e50;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      margin-right: 5px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    .action-row {
+      margin-top: 15px;
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Modal Tweaks */
+    .modal-lg {
+      width: 600px;
+      max-width: 90%;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      text-align: left;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    /* Vehicles List in Detail */
+    .vehicle-list-item {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+
+    .vehicle-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    /* RTL specific overrides handled by JS, but base CSS should be direction agnostic where possible */
+  </style>
+</head>
+
+<body>
+
+  <!-- Language Switcher -->
+  <div class="language-switcher">
+    <button class="lang-btn" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="ar">العربية</button>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Tashgheel Services</h2>
+      </div>
+      <nav>
+        <a href="visits.html" class="nav-item" data-i18n-key="nav_visits" data-i18n-ar="🔧 زيارات الخدمة">🔧 Service
+          Visits</a>
+        <a href="vendors.html" class="nav-item" data-i18n-key="nav_vendors" data-i18n-ar="🏪 الموردين">🏪 Vendors</a>
+        <a href="customers.html" class="nav-item active" data-i18n-key="nav_customers" data-i18n-ar="👥 العملاء">👥
+          Customers</a>
+        <a href="products.html" class="nav-item" data-i18n-key="nav_products" data-i18n-ar="📦 قطع الغيار">📦 Spare
+          Parts</a>
+        <a href="receipts.html" class="nav-item" data-i18n-key="nav_receipts" data-i18n-ar="🧾 الفواتير">🧾 Receipts</a>
+        <a href="reports.html" class="nav-item" data-i18n-key="nav_reports" data-i18n-ar="📈 التقارير">📈 Reports</a>
+        <a href="salesmen.html" class="nav-item" data-i18n-key="nav_salesmen" data-i18n-ar="👔 الموظفين">👔
+          Employees</a>
+        <a href="expenses.html" class="nav-item" data-i18n-key="nav_expenses" data-i18n-ar="💰 المصاريف">💰 Expenses</a>
+        <a href="admin.html" class="nav-item" data-i18n-key="nav_admin" data-i18n-ar="⚙️ لوحة التحكم">⚙️ Admin Panel</a>
+        <a href="backup.html" class="nav-item" data-i18n-key="nav_backup" data-i18n-ar="💾 النسخ الاحتياطي">💾
+          Backup</a>
+        <a href="#" onclick="if(confirm('Logout?')) window.logout();" class="nav-item" data-i18n-key="logout"
+          data-i18n-ar="🚪 تسجيل الخروج">🚪 Logout</a>
+      </nav>
+      <div class="sidebar-footer"
+        style="text-align:center; padding:15px; font-size:0.85em; border-top:1px solid #34495e;">
+        <strong>Tashgheel Services</strong><br>
+        <small style="color:#95a5a6;">powered by itqansolutions © 2025</small><br>
+        <small style="color:#95a5a6;">
+          📧 info@itqansolutions.org<br>
+          📱 +201126522373 / +201155253886
+        </small>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 data-i18n-key="nav_customers">👥 Customers & Vehicles</h1>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="welcomeText">Welcome,</span>
+          <span id="currentUserName">User</span>
+          <span id="userRole" class="user-role"></span>
+        </div>
+      </header>
+
+      <section class="content-area">
+
+        <!-- Upcoming Visits Reminders -->
+        <div id="upcomingVisitsCard"
+          style="display:none; margin-bottom:20px; padding:20px; background:linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left:5px solid #2196f3; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+          <h3 style="margin:0 0 15px 0; color:#1565c0; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.5em;">📅</span>
+            <span data-i18n-key="upcoming_visits_title">Upcoming Scheduled Visits</span>
+          </h3>
+          <div id="upcomingVisitsList"></div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card" style="margin-bottom: 20px; padding: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display:flex; gap: 10px; width: 60%;">
+              <input type="text" id="searchBox" placeholder="Search by name, mobile, plate number..." class="search-box"
+                style="flex:1;" data-i18n-placeholder="search_placeholder_customers">
+              <button class="btn btn-secondary" onclick="renderApp()">🔍 Search</button>
+            </div>
+            <button class="btn btn-success" onclick="openAddCustomerModal()">+ <span
+                data-i18n-key="add_new_customer">New
+                Customer</span></button>
+          </div>
+        </div>
+
+        <!-- Customers Grid -->
+        <div id="loadingText" style="text-align: center; padding: 20px; display: none;">Loading...</div>
+        <div id="customersContainer" class="customer-grid">
+          <!-- populated by JS -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add/Edit Customer Modal -->
+  <div id="customerModal" class="modal" style="display:none;">
+    <div class="modal-content modal-lg">
+      <h3 id="modalTitle" data-i18n-key="add_new_customer">Add New Customer</h3>
+      <form id="customerForm" onsubmit="handleCustomerSubmit(event)">
+        <input type="hidden" id="customerId">
+        <div class="form-grid">
+          <div class="form-group">
+            <label data-i18n-key="name">Name *</label>
+            <input type="text" id="custName" required>
+          </div>
+          <div class="form-group">
+            <label data-i18n-key="mobile">Mobile *</label>
+            <input type="tel" id="custMobile" required>
+          </div>
+          <div class="form-group">
+            <label for="vehicleVin" data-i18n-key="vin_no">VIN / رقم الشاسية:</label>
+            <input type="text" id="vehicleVin">
+          </div>
+          <div class="form-group">
+            <label for="vehicleEngine" data-i18n-key="engine_no">Engine No / رقم المحرك:</label>
+            <input type="text" id="vehicleEngine">
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label data-i18n-key="notes_optional">Notes (Optional)</label>
+            <textarea id="custNotes" rows="2"></textarea>
+          </div>
+        </div>
+        <!-- Initial Vehicle (Optional for fast entry) -->
+        <fieldset style="border:1px solid #eee; padding: 10px; margin-top: 10px; border-radius:4px;">
+          <legend data-i18n-key="vehicle_optional">Vehicle (Optional)</legend>
+          <div class="form-grid">
+            <div class="form-group">
+              <label data-i18n-key="plate_number">Plate Number</label>
+              <input type="text" id="vehiclePlate">
+            </div>
+            <div class="form-group">
+              <label data-i18n-key="brand">Brand (e.g. Toyota)</label>
+              <input type="text" id="vehicleBrand">
+            </div>
+            <div class="form-group">
+              <label data-i18n-key="model">Model (e.g. Camry)</label>
+              <input type="text" id="vehicleModel">
+            </div>
+            <div class="form-group">
+              <label data-i18n-key="year">Year</label>
+              <input type="text" id="vehicleYear">
+            </div>
+          </div>
+        </fieldset>
+
+        <div style="margin-top: 20px; text-align: right;">
+          <button type="button" class="btn btn-danger" onclick="closeModal('customerModal')"
+            data-i18n-key="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n-key="save_customer">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Customer Details & Vehicles Modal -->
+  <div id="detailsModal" class="modal" style="display:none;">
+    <div class="modal-content modal-lg">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+        <h3 id="detailsTitle" data-i18n-key="customer_details">Customer Details</h3>
+        <button class="btn btn-sm btn-secondary" onclick="closeModal('detailsModal')">X</button>
+      </div>
+
+      <div id="customerInfoDisplay" style="text-align:left; margin-bottom:20px;"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h4 data-i18n-key="vehicles">Vehicles</h4>
+        <button class="btn btn-sm btn-success" onclick="openAddVehicleModal()">+ <span data-i18n-key="add_vehicle">Add
+            Vehicle</span></button>
+      </div>
+
+      <div id="vehiclesList" style="max-height: 300px; overflow-y: auto;">
+        <!-- List of vehicles -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Vehicle Modal (Nested or Separate? Separate is better to avoid z-index hell) -->
+  <div id="vehicleModal" class="modal" style="display:none; z-index: 2000;">
+    <div class="modal-content">
+      <h3 data-i18n-key="add_vehicle">Add Vehicle</h3>
+      <form id="vehicleForm" onsubmit="handleVehicleSubmit(event)">
+        <input type="hidden" id="vehicleCustomerId"> <!-- Linked Customer -->
+        <div class="form-grid">
+          <div class="form-group"><label data-i18n-key="plate_number">Plate Number *</label><input type="text"
+              id="vPlate" required></div>
+          <div class="form-group"><label data-i18n-key="brand">Brand *</label><input type="text" id="vBrand" required>
+          </div>
+          <div class="form-group"><label data-i18n-key="model">Model *</label><input type="text" id="vModel" required>
+          </div>
+          <div class="form-group"><label data-i18n-key="year">Year</label><input type="text" id="vYear"></div>
+          <div class="form-group"><label data-i18n-key="color">Color</label><input type="text" id="vColor"></div>
+          <div class="form-group"><label data-i18n-key="vin_no">Chassis No.</label><input type="text" id="vChassis">
+          </div>
+          <div class="form-group"><label data-i18n-key="engine_no">Engine No.</label><input type="text" id="vEngine">
+          </div>
+        </div>
+        <div style="margin-top: 15px; text-align: right;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('vehicleModal')"
+            data-i18n-key="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n-key="save_vehicle">Save Vehicle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/translations.js"></script>
+  <script src="js/customers-app.js"></script>
+  <script src="js/next-visit-helper.js"></script>
+</body>
+
+</html>

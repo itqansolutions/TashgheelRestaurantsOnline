@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title data-i18n-key="employees_management">Salesmen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/salesmen-app.css">
+  <link rel="stylesheet" href="css/salesmen-app.css">
+  <script src="js/translations.js"></script>
+  <script src="js/salesmen-app.js" defer></script>
+</head>
+
+<body>
+  <div class="language-switcher">
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="ar">AR</button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Tashgheel Services</h2>
+      </div>
+      <nav>
+        <a href="visits.html" class="nav-item" data-i18n-key="nav_visits" data-i18n-ar="🔧 زيارات الخدمة">🔧 Service
+          Visits</a>
+        <a href="vendors.html" class="nav-item" data-i18n-key="nav_vendors" data-i18n-ar="🏪 الموردين">🏪 Vendors</a>
+        <a href="customers.html" class="nav-item" data-i18n-key="nav_customers" data-i18n-ar="👥 العملاء">👥
+          Customers</a>
+        <a href="products.html" class="nav-item" data-i18n-key="nav_products" data-i18n-ar="📦 قطع الغيار">📦 Spare
+          Parts</a>
+        <a href="receipts.html" class="nav-item" data-i18n-key="nav_receipts" data-i18n-ar="🧾 الفواتير">🧾 Receipts</a>
+        <a href="reports.html" class="nav-item" data-i18n-key="nav_reports" data-i18n-ar="📈 التقارير">📈 Reports</a>
+        <a href="salesmen.html" class="nav-item active" data-i18n-key="nav_salesmen" data-i18n-ar="👔 الموظفين">👔
+          Employees</a>
+        <a href="expenses.html" class="nav-item" data-i18n-key="nav_expenses" data-i18n-ar="💰 المصاريف">💰 Expenses</a>
+        <a href="admin.html" class="nav-item" data-i18n-key="nav_admin" data-i18n-ar="⚙️ لوحة التحكم">⚙️ Admin Panel</a>
+        <a href="backup.html" class="nav-item" data-i18n-key="nav_backup" data-i18n-ar="💾 النسخ الاحتياطي">💾
+          Backup</a>
+        <a href="#" onclick="if(confirm('Logout?')) window.logout();" class="nav-item" data-i18n-key="logout"
+          data-i18n-ar="🚪 تسجيل الخروج">🚪 Logout</a>
+      </nav>
+      <div class="sidebar-footer"
+        style="text-align:center; padding:15px; font-size:0.85em; border-top:1px solid #34495e;">
+        <strong>Tashgheel Services</strong><br>
+        <small style="color:#95a5a6;">powered by itqansolutions © 2025</small><br>
+        <small style="color:#95a5a6;">
+          📧 info@itqansolutions.org<br>
+          📱 +201126522373 / +201155253886
+        </small>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 data-i18n-key="employees_management">👔 Employees Management</h1>
+      </header>
+
+      <section class="content-area">
+
+        <!-- Section 1: Add Employee -->
+        <form id="salesman-form" class="card">
+          <h2 data-i18n-key="add_employee">➕ Add Employee</h2>
+          <div class="form-group">
+            <label for="salesman-name" data-i18n-key="employee_name">Employee Name</label>
+            <input type="text" id="salesman-name" required />
+          </div>
+          <button type="submit" class="btn btn-primary" data-i18n-key="save">💾 Save</button>
+        </form>
+
+        <div class="card mt-20">
+          <h2 data-i18n-key="employees_list">📋 Employees List</h2>
+          <table class="report-table" id="salesmen-table">
+            <thead>
+              <tr>
+                <th data-i18n-key="name">Name</th>
+                <th data-i18n-key="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="salesmen-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Section 2: Monthly Target -->
+        <form id="target-form" class="card mt-20">
+          <h2 data-i18n-key="set_monthly_target">🎯 Set Monthly Target</h2>
+          <div class="form-group">
+            <label for="target-salesman" data-i18n-key="employee">Employee</label>
+            <select id="target-salesman" required></select>
+          </div>
+          <div class="form-group">
+            <label for="target-month" data-i18n-key="month">Month</label>
+            <select id="target-month" required></select>
+          </div>
+          <div class="form-group">
+            <label for="target-year" data-i18n-key="year">Year</label>
+            <select id="target-year" required></select>
+          </div>
+          <div class="form-group">
+            <label for="target-value" data-i18n-key="target_egp">Target (EGP)</label>
+            <input type="number" id="target-value" min="0" required />
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Save</button>
+        </form>
+
+        <div class="card mt-20">
+          <h2 data-i18n-key="monthly_targets">📆 Monthly Targets</h2>
+          <table class="report-table" id="monthly-targets-table">
+            <thead>
+              <tr>
+                <th data-i18n-key="employee">Employee</th>
+                <th data-i18n-key="month">Month</th>
+                <th data-i18n-key="year">Year</th>
+                <th data-i18n-key="target">Target</th>
+              </tr>
+            </thead>
+            <tbody id="monthly-targets-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Section 3: Monthly Performance -->
+        <div class="card mt-20">
+          <h2 data-i18n-key="monthly_performance">📊 Monthly Performance</h2>
+          <table class="report-table" id="salesmen-performance-table">
+            <thead>
+              <tr>
+                <th data-i18n-key="employee">Employee</th>
+                <th data-i18n-key="month">Month</th>
+                <th data-i18n-key="year">Year</th>
+                <th data-i18n-key="target">Target</th>
+                <th data-i18n-key="achieved">Achieved</th>
+                <th data-i18n-key="percentage">%</th>
+              </tr>
+            </thead>
+            <tbody id="salesmen-performance-body"></tbody>
+          </table>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    Tashgheel POS© 2025</strong> |
+    <a href="tel:+201126522373">+201126522373 / +201155253886</a>
+    <span id="footerText">Designed and developed by itqan</span>
+  </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (currentUser?.role === 'cashier') {
+        alert('Access denied');
+        window.location.href = 'pos.html';
+      }
+    });
+  </script>
+
+</body>
+
+</html>

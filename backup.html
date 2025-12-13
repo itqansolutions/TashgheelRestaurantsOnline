@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="backup">Backup - POS</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+  <div class="language-switcher">
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="ar">AR</button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Tashgheel Services</h2>
+      </div>
+      <nav>
+        <a href="visits.html" class="nav-item" data-i18n-key="nav_visits" data-i18n-ar="🔧 زيارات الخدمة">🔧 Service
+          Visits</a>
+        <a href="vendors.html" class="nav-item" data-i18n-key="nav_vendors" data-i18n-ar="🏪 الموردين">🏪 Vendors</a>
+        <a href="customers.html" class="nav-item" data-i18n-key="nav_customers" data-i18n-ar="👥 العملاء">👥
+          Customers</a>
+        <a href="products.html" class="nav-item" data-i18n-key="nav_products" data-i18n-ar="📦 قطع الغيار">📦 Spare
+          Parts</a>
+        <a href="receipts.html" class="nav-item" data-i18n-key="nav_receipts" data-i18n-ar="🧾 الفواتير">🧾 Receipts</a>
+        <a href="reports.html" class="nav-item" data-i18n-key="nav_reports" data-i18n-ar="📈 التقارير">📈 Reports</a>
+        <a href="salesmen.html" class="nav-item" data-i18n-key="nav_salesmen" data-i18n-ar="👔 الموظفين">👔
+          Employees</a>
+        <a href="expenses.html" class="nav-item" data-i18n-key="nav_expenses" data-i18n-ar="💰 المصاريف">💰 Expenses</a>
+        <a href="admin.html" class="nav-item" data-i18n-key="nav_admin" data-i18n-ar="⚙️ لوحة التحكم">⚙️ Admin Panel</a>
+        <a href="backup.html" class="nav-item active" data-i18n-key="nav_backup" data-i18n-ar="💾 النسخ الاحتياطي">💾
+          Backup</a>
+        <a href="#" onclick="if(confirm('Logout?')) window.logout();" class="nav-item" data-i18n-key="logout"
+          data-i18n-ar="🚪 تسجيل الخروج">🚪 Logout</a>
+      </nav>
+      <div class="sidebar-footer"
+        style="text-align:center; padding:15px; font-size:0.85em; border-top:1px solid #34495e;">
+        <strong>Tashgheel Services</strong><br>
+        <small style="color:#95a5a6;">powered by itqansolutions © 2025</small><br>
+        <small style="color:#95a5a6;">
+          📧 info@itqansolutions.org<br>
+          📱 +201126522373 / +201155253886
+        </small>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 data-i18n="backup">Backup</h1>
+      </header>
+
+      <section class="content-area">
+
+        <!-- Auto Backup Settings -->
+        <div class="card mb-20" style="border-left: 5px solid #3498db;">
+          <h2 data-i18n="auto_backup_settings">🔄 Automatic Daily Backup</h2>
+          <p data-i18n="auto_backup_desc">Configure where to save your daily backups automatically.</p>
+
+          <div style="margin: 15px 0;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" id="auto-backup-toggle" style="width: 20px; height: 20px; margin-right: 10px;">
+              <span style="font-size: 1.1em;" data-i18n="enable_auto_backup">Enable Daily Automatic Backup</span>
+            </label>
+          </div>
+
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px;">
+            <strong data-i18n="backup_location">Backup Location:</strong><br>
+            <code id="backup-folder-display"
+              style="display: block; margin: 5px 0 10px 0; background: #eee; padding: 5px; border-radius: 4px;">No folder selected</code>
+            <button id="select-folder-btn" class="btn btn-secondary" data-i18n="choose_folder_btn">📂 Choose
+              Folder...</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="create_backup">📥 Create Backup</h2>
+          <p data-i18n="create_backup_desc">Download a full backup of your current data.</p>
+          <button onclick="createBackup()" class="btn btn-primary" data-i18n="create_backup_btn">💾 Download
+            Backup</button>
+        </div>
+
+        <div class="card mt-20">
+          <h2 data-i18n="restore_backup">📤 Restore Backup</h2>
+          <p data-i18n="restore_backup_desc">Warning: Restoring will overwrite your current data!</p>
+          <input type="file" id="backupFileInput" accept=".json">
+          <button onclick="restoreBackup()" class="btn btn-danger mt-10" data-i18n="restore_backup_btn">⚠️ Restore
+            Backup</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    Tashgheel POS© 2025 - Designed and developed by <strong>itqan</strong> |
+    <a href="tel:+201126522373">+201126522373 / +201155253886</a>
+  </footer>
+
+
+  <script src="js/translations.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (currentUser?.role === 'cashier') {
+        alert('Access denied');
+        window.location.href = 'pos.html';
+        return;
+      }
+    });
+
+    function createBackup() {
+      const data = {};
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          data[key] = localStorage.getItem(key);
+        }
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pos_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function restoreBackup() {
+      if (!confirm('⚠️ This will overwrite your current data. Continue?')) return;
+      const fileInput = document.getElementById('backupFileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert('Please select a backup file.');
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const backupData = JSON.parse(e.target.result);
+          if (!confirm('Are you sure you want to restore this backup? All current data will be lost.')) return;
+          localStorage.clear();
+          for (let key in backupData) {
+            localStorage.setItem(key, backupData[key]);
+          }
+          alert('✅ Backup restored successfully. The app will now reload.');
+          location.reload();
+        } catch (err) {
+          alert('❌ Failed to restore backup. Invalid file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+
+</html>

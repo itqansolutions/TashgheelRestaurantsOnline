@@ -1,0 +1,31 @@
+<!-- Add this HTML to visits.html after the visitNotes textarea (around line 238) -->
+
+<h3 style="margin-top:20px;">📅 Schedule Next Visit (Optional)</h3>
+<div class="form-group">
+    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="scheduleNextVisit" onchange="toggleNextVisitFields()" style="width:auto;">
+        <span>Schedule a follow-up visit for this customer</span>
+    </label>
+</div>
+
+<div id="nextVisitFields"
+    style="display:none; padding:15px; background:#e3f2fd; border-radius:6px; margin-top:10px; border-left:4px solid #2196f3;">
+    <div class="form-group">
+        <label>Next Visit Date: <span style="color:red;">*</span></label>
+        <input type="date" id="nextVisitDate"
+            style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+    </div>
+    <div class="form-group">
+        <label>Service Type: <span style="color:red;">*</span></label>
+        <input type="text" id="nextVisitService" placeholder="e.g., Oil Change, Brake Check, Tire Rotation"
+            style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+    </div>
+    <div class="form-group">
+        <label>Reminder Notes:</label>
+        <textarea id="nextVisitNotes" rows="2" placeholder="Additional notes for the next visit..."
+            style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></textarea>
+    </div>
+    <p style="margin:10px 0 0 0; font-size:0.9em; color:#666;">
+        💡 This will create a reminder that appears on the Customers page
+    </p>
+</div>

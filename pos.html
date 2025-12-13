@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasgheel POS System</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .cart-item button {
+      margin-left: 10px;
+      padding: 4px 6px;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- License Check -->
+  <div id="licenseCheckOverlay"
+    style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000000e6;z-index:10000;color:white;text-align:center;padding-top:150px;">
+    <h2>🔒 Access Denied</h2>
+    <p>This system requires a valid license to operate.</p>
+    <button onclick="window.location.href='index.html'" class="btn btn-primary" style="margin-top: 20px;">Go to
+      Activation</button>
+  </div>
+
+  <!-- Language Switcher -->
+  <div class="language-switcher">
+    <button class="lang-btn" onclick="setLanguage('en')" id="langEn">English</button>
+    <button class="lang-btn" onclick="setLanguage('ar')" id="langAr">العربية</button>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2 id="posSystemTitle" data-i18n-key="shop_pos_system">🏪Tasgheel POS System</h2>
+        <p id="licensedVersion" data-i18n-key="enhanced_security">Enhanced Edition</p>
+      </div>
+      <nav>
+        <a href="pos.html" class="nav-item active" data-i18n-key="nav_pos">🛒 Point of Sale</a>
+        <a href="customers.html" class="nav-item" data-i18n-key="nav_customers">👥 Customers</a>
+        <a href="visits.html" class="nav-item" data-i18n-key="nav_visits">🔧 Service Visits</a>
+        <a href="vendors.html" class="nav-item" data-i18n-key="nav_vendors">🏪 Vendors</a>
+        <a href="products.html" class="nav-item" data-i18n-key="nav_products">📦 Products</a>
+        <a href="receipts.html" class="nav-item" data-i18n-key="nav_receipts">🧾 Receipts</a>
+        <a href="reports.html" class="nav-item" data-i18n-key="nav_reports">📈 Reports</a>
+        <a href="salesmen.html" class="nav-item" data-i18n-key="nav_salesmen">🧑‍💼 Salesmen</a>
+        <a href="expenses.html" class="nav-item" data-i18n-key="nav_expenses">📋 Expenses</a>
+        <a href="admin.html" class="nav-item" data-i18n-key="nav_admin">⚙️ Admin Panel</a>
+        <a href="backup.html" class="nav-item" data-i18n-key="nav_backup">💾 Backup</a>
+        <a href="#" onclick="if(confirm('Logout?')) window.logout();" class="nav-item" data-i18n-key="logout">🚪
+          Logout</a>
+      </nav>
+
+      <div class="sidebar-footer">
+
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 id="pageTitle" data-i18n-key="nav_pos">Point of Sale</h1>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="welcomeText" data-i18n-key="welcome">Welcome,</span>
+          <span id="currentUserName">User</span>
+          <span id="userRole" class="user-role">cashier</span>
+          <span style="background:#27ae60;color:white;padding:4px 8px;border-radius:12px;font-size:0.7rem;"
+            data-i18n-key="activated">🔐 Licensed</span>
+        </div>
+      </header>
+
+      <section class="content-area">
+        <div class="pos-layout">
+          <!-- Products Section -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <span id="productsTitle" data-i18n-key="productsTitle">Products</span>
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <input type="text" id="productSearch" placeholder="Search by name, code, or barcode..."
+                    class="search-box" style="width:200px;">
+                  <button class="btn btn-secondary" onclick="scanBarcode()" id="scanBtn" data-i18n-key="scan_btn">📷
+                    Scan</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="product-grid" id="productGrid">
+                  <div style="text-align:center;padding:40px;color:#666;">
+                    <p id="loadingText" data-i18n-key="loading">Loading products...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cart Section -->
+          <div class="cart">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+              <h3 id="cartTitle" data-i18n-key="cart_title">🛒 Cart</h3>
+              <span id="cartCounter" class="badge">0</span>
+            </div>
+
+            <div id="cartItems">
+              <p id="cartEmptyText" style="text-align:center;color:#666;" data-i18n-key="cart_empty">Cart is empty</p>
+            </div>
+
+            <div class="cart-summary">
+              <div><span id="subtotalLabel" data-i18n-key="subtotal">Subtotal:</span> <span id="cartSubtotal">0.00
+                  ج.م</span></div>
+              <div><span id="discountLabel" data-i18n-key="discount">Discount:</span> <span id="cartDiscount">0.00
+                  ج.م</span></div>
+              <div><span id="taxLabel" data-i18n-key="tax">Tax (0%):</span> <span id="cartTax">0.00 ج.م</span></div>
+              <hr>
+              <div class="cart-total" id="cartTotal">Total: 0.00 ج.م</div>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label for="salesmanSelect">👤 <span id="salesmanLabel"
+                  data-i18n-key="salesman_label">Salesman:</span></label>
+              <select id="salesmanSelect" style="width:100%;padding:6px;margin-top:5px;"></select>
+            </div>
+
+            <div class="payment-methods">
+              <button class="btn btn-success" onclick="processSale('cash')" id="cashBtn" disabled
+                data-i18n-key="cash">💵 Cash</button>
+              <button class="btn btn-success" onclick="processSale('card')" id="cardBtn" disabled
+                data-i18n-key="card">💳 Card</button>
+              <button class="btn btn-success" onclick="processSale('mobile')" id="mobileBtn" disabled
+                data-i18n-key="mobile">📱 Mobile</button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+              <button class="btn btn-warning" onclick="holdTransaction()" id="holdBtn" disabled
+                data-i18n-key="hold_btn">⏸️ Hold</button>
+              <button class="btn btn-secondary" onclick="clearCart()" id="clearCartBtn" disabled
+                data-i18n-key="clear_cart_btn">🗑️ Clear</button>
+            </div>
+
+            <button class="btn btn-info" onclick="closeDay()" style="margin-top:10px;width:100%;">🧾 <span
+                id="closeDayBtn" data-i18n-key="close_day_btn">Close Day</span></button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Close Day Modal -->
+  <div id="closeDayModal" class="modal" style="display:none;">
+    <div class="modal-content" style="width:400px;">
+      <h3 id="daySummaryTitle" data-i18n-key="day_summary_title">📊 Day Summary</h3>
+      <div id="daySummaryContent" style="text-align:left;margin-top:10px;"></div>
+      <br>
+      <button onclick="window.print()" class="btn btn-primary">🖨️ <span id="printBtn"
+          data-i18n-key="print_btn">Print</span></button>
+      <button onclick="document.getElementById('closeDayModal').style.display='none'" class="btn btn-danger">✖️ <span
+          id="cancelBtn" data-i18n-key="close_btn">Close</span></button>
+    </div>
+  </div>
+
+  <!-- Discount Modal -->
+  <div id="discountModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3 id="discountTitle" data-i18n-key="discount_modal_title">🧾 Discount</h3>
+      <label data-i18n-key="discount_type">Discount Type:</label>
+      <select id="discountType">
+        <option value="none" data-i18n-key="discount_none">None</option>
+        <option value="percent" data-i18n-key="discount_percent">Percentage (%)</option>
+        <option value="value" data-i18n-key="discount_fixed">Fixed Value</option>
+      </select>
+      <br><br>
+      <label data-i18n-key="discount_value">Value:</label>
+      <input type="number" id="discountValue" placeholder="0">
+      <br><br>
+      <button onclick="saveDiscount()" data-i18n-key="save">💾 Save</button>
+      <button onclick="closeDiscountModal()" data-i18n-key="cancel">✖️ Cancel</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    Tashgheel POS© 2025</strong> |
+    <a href="tel:+201126522373">+201126522373 / +201155253886</a>
+    <span id="footerText" data-i18n-key="enhanced_security">Designed and developed by itqan</span>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/auth.js"></script>
+  <script src="js/backup-system.js"></script>
+  <script src="js/translations.js"></script>
+  <script src="js/pos-app.js"></script>
+
+
+</body>
+
+</html>

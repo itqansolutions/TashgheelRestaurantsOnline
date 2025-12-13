@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Visits - Tasgheel</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Visit Specific Dashboard Styles */
+        .visits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .visit-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #3498db;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .visit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .visit-card.completed {
+            border-left-color: #27ae60;
+        }
+
+        .visit-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .visit-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        /* Editor Styles */
+        .visit-editor {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 100px);
+        }
+
+        .editor-main {
+            background: #f9f9f9;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .editor-sidebar {
+            background: white;
+            padding: 15px;
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .service-row {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin: 15px 0 10px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .search-result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background: #f0f8ff;
+        }
+
+        /* Modal for selection */
+        .selection-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            width: 500px;
+            max-width: 90%;
+            z-index: 1001;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="language-switcher">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ar">AR</button>
+    </div>
+
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Tashgheel Services</h2>
+            </div>
+            <nav>
+                <a href="visits.html" class="nav-item active" data-i18n-key="nav_visits"
+                    data-i18n-ar="🔧 زيارات الخدمة">🔧 Service Visits</a>
+                <a href="vendors.html" class="nav-item" data-i18n-key="nav_vendors" data-i18n-ar="🏪 الموردين">🏪
+                    Vendors</a>
+                <a href="customers.html" class="nav-item" data-i18n-key="nav_customers" data-i18n-ar="👥 العملاء">👥
+                    Customers</a>
+                <a href="products.html" class="nav-item" data-i18n-key="nav_products" data-i18n-ar="📦 قطع الغيار">📦
+                    Spare Parts</a>
+                <a href="receipts.html" class="nav-item" data-i18n-key="nav_receipts" data-i18n-ar="🧾 الفواتير">🧾
+                    Receipts</a>
+                <a href="reports.html" class="nav-item" data-i18n-key="nav_reports" data-i18n-ar="📈 التقارير">📈
+                    Reports</a>
+                <a href="salesmen.html" class="nav-item" data-i18n-key="nav_salesmen" data-i18n-ar="👔 الموظفين">👔
+                    Employees</a>
+                <a href="expenses.html" class="nav-item" data-i18n-key="nav_expenses" data-i18n-ar="💰 المصاريف">💰
+                    Expenses</a>
+                <a href="admin.html" class="nav-item" data-i18n-key="nav_admin" data-i18n-ar="⚙️ لوحة التحكم">⚙️ Admin
+                    Panel</a>
+                <a href="backup.html" class="nav-item" data-i18n-key="nav_backup" data-i18n-ar="💾 النسخ الاحتياطي">💾
+                    Backup</a>
+                <a href="#" onclick="if(confirm('Logout?')) window.logout();" class="nav-item" data-i18n-key="logout"
+                    data-i18n-ar="🚪 تسجيل الخروج">🚪 Logout</a>
+            </nav>
+            <div class="sidebar-footer"
+                style="text-align:center; padding:15px; font-size:0.85em; border-top:1px solid #34495e;">
+                <strong>Tashgheel Services</strong><br>
+                <small style="color:#95a5a6;">powered by itqansolutions © 2025</small><br>
+                <small style="color:#95a5a6;">
+                    📧 info@itqansolutions.org<br>
+                    📱 +201126522373 / +201155253886
+                </small>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="pageTitle" data-i18n="nav_visits">🔧 Service Visits</h1>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span id="currentUserName">User</span>
+                </div>
+            </header>
+
+            <section class="content-area">
+                <!-- DASHBOARD VIEW -->
+                <div id="dashboardView">
+                    <div class="card" style="margin-bottom: 20px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <input type="text" id="visitSearch" data-i18n-placeholder="search_placeholder_visit"
+                                placeholder="Search by vehicle, customer..." class="search-box" style="width: 300px;">
+                            <button class="btn btn-success" onclick="startNewVisit()"><span data-i18n="new_visit">+ New
+                                    Visit</span></button>
+                        </div>
+                    </div>
+
+                    <!-- Maintenance Reminders -->
+                    <div id="remindersCard" class="card"
+                        style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; display: none;">
+                        <h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ <span
+                                data-i18n="maintenance_reminders">Maintenance Reminders</span></h4>
+                        <div id="remindersList" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+
+                    <h3 style="margin-left: 20px; color: #666;" data-i18n="active_visits">Active Visits</h3>
+                    <div id="visitsGrid" class="visits-grid">
+                        <!-- Loaded by JS -->
+                    </div>
+                </div>
+
+                <!-- EDITOR VIEW -->
+                <div id="editorView" class="visit-editor" style="display:none;">
+                    <div class="editor-main">
+                        <div class="card" style="margin-bottom: 15px;">
+                            <div class="card-header">
+                                <span data-i18n="customer_vehicle">Customer & Vehicle</span>
+                                <button class="btn btn-sm btn-secondary" onclick="closeEditor()"
+                                    style="float:right;">X</button>
+                            </div>
+                            <div class="card-body" style="display:flex; justify-content: space-between;">
+                                <div>
+                                    <h3 id="editorCustomer" style="margin:0;">-</h3>
+                                    <p id="editorMobile" style="margin:5px 0; color:#666;">-</p>
+                                </div>
+                                <div style="text-align:right;">
+                                    <h3 id="editorVehicle" style="margin:0;">-</h3>
+                                    <span id="editorPlate"
+                                        style="background:#333; color:white; padding:2px 6px; border-radius:4px;">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technician Selection -->
+                        <div style="margin:15px 0; padding:15px; background:#f8f9fa; border-radius:6px;">
+                            <div style="margin-bottom:15px;">
+                                <label style="display:block; margin-bottom:5px; font-weight:bold;"
+                                    data-i18n="technician_label">
+                                    Technician / Employee / الفني:
+                                </label>
+                                <select id="visitTechnician"
+                                    style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                    <option value="" data-i18n="select_technician">Select Technician</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom:0;">
+                                <label style="display:block; margin-bottom:5px; font-weight:bold;"
+                                    data-i18n="current_mileage">
+                                    Current Mileage (KM) / العداد الحالي:
+                                </label>
+                                <input type="number" id="visitMileage" data-i18n-placeholder="mileage_placeholder"
+                                    placeholder="e.g., 45000" min="0" step="1"
+                                    style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                <small style="display:block; margin-top:5px; color:#666; font-size:0.85em;"
+                                    data-i18n="mileage_hint">
+                                    💡 Record the odometer reading for maintenance tracking
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="section-title" data-i18n="services_labor">Services (Labor)</div>
+                        <div id="servicesList">
+                            <!-- Services added -->
+                        </div>
+                        <button class="btn btn-outline-primary"
+                            style="width:100%; border:1px dashed #3498db; color:#3498db;" onclick="openServiceModal()"
+                            data-i18n="add_service">+
+                            Add Service</button>
+
+                        <div class="section-title" data-i18n="spare_parts_title">Spare Parts</div>
+                        <div id="partsList">
+                            <!-- Parts added -->
+                        </div>
+                        <button class="btn btn-outline-primary"
+                            style="width:100%; border:1px dashed #e67e22; color:#e67e22; margin-top:10px;"
+                            onclick="openPartModal()" data-i18n="add_part">+ Add Part</button>
+
+                        <div class="section-title" data-i18n="visit_notes">Visit Notes</div>
+                        <textarea id="visitNotes"
+                            style="width:100%; height: 80px; padding:10px; border:1px solid #ddd; border-radius:4px;"></textarea>
+
+                        <!-- Next Visit Scheduling -->
+                        <div style="margin-top:20px;">
+                            <h3 style="margin-bottom:10px;" data-i18n="schedule_next_visit_opt">📅 Schedule Next Visit
+                                (Optional)</h3>
+                            <div style="margin-bottom:10px;">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                    <input type="checkbox" id="scheduleNextVisit" onchange="toggleNextVisitFields()"
+                                        style="width:auto;">
+                                    <span data-i18n="schedule_follow_up">Schedule a follow-up visit for this
+                                        customer</span>
+                                </label>
+                            </div>
+
+                            <div id="nextVisitFields"
+                                style="display:none; padding:15px; background:#e3f2fd; border-radius:6px; margin-top:10px; border-left:4px solid #2196f3;">
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block; margin-bottom:5px; font-weight:bold;"><span
+                                            data-i18n="next_visit_date">Next Visit Date:</span>
+                                        <span style="color:red;">*</span></label>
+                                    <input type="date" id="nextVisitDate"
+                                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block; margin-bottom:5px; font-weight:bold;"><span
+                                            data-i18n="service_type">Service Type:</span>
+                                        <span style="color:red;">*</span></label>
+                                    <input type="text" id="nextVisitService" placeholder="e.g., Oil Change, Brake Check"
+                                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block; margin-bottom:5px; font-weight:bold;"
+                                        data-i18n="reminder_notes">Reminder
+                                        Notes:</label>
+                                    <textarea id="nextVisitNotes" rows="2" placeholder="Additional notes..."
+                                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></textarea>
+                                </div>
+                                <p style="margin:10px 0 0 0; font-size:0.9em; color:#666;" data-i18n="reminder_hint">
+                                    💡 This will create a reminder on the Customers page
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="editor-sidebar">
+                        <h3 data-i18n="summary_title">Summary</h3>
+                        <hr>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <span data-i18n="labor_total">Labor Total:</span>
+                                <span id="sumLabor">0.00</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <span data-i18n="parts_total">Parts Total:</span>
+                                <span id="sumParts">0.00</span>
+                            </div>
+                            <hr>
+                            <div
+                                style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:bold;">
+                                <span data-i18n="subtotal_label">Subtotal:</span>
+                                <span id="sumSubtotal">0.00</span>
+                            </div>
+                            <div
+                                style="display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;">
+                                <label style="display:flex; align-items:center; gap:5px; margin:0;">
+                                    <input type="checkbox" id="enableTax" onchange="calculateTotals()" checked>
+                                    <span data-i18n="tax_label">Tax (14%)</span>
+                                </label>
+                                <span id="sumTax">0.00</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#c0392b;">
+                                <span data-i18n="discount_label">Discount:</span>
+                                <input type="number" id="visitDiscount" value="0" style="width:60px; text-align:right;"
+                                    onchange="calculateTotals()">
+                            </div>
+                            <hr>
+                            <div
+                                style="display:flex; justify-content:space-between; font-size:1.2em; font-weight:bold; color:#2c3e50;">
+                                <span data-i18n="total_label">Total:</span>
+                                <span id="sumTotal">0.00</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:20px; display:grid; gap:10px;">
+                            <button class="btn btn-warning" onclick="saveVisit(false)" data-i18n="save_draft">💾 Save
+                                Draft</button>
+                            <button class="btn btn-success" onclick="finishVisit()" data-i18n="finish_invoice">✅ Finish
+                                & Invoice</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Customer Selection Modal -->
+    <div id="customerSelectModal" class="selection-modal">
+        <h3 data-i18n="select_customer_vehicle">Select Customer & Vehicle</h3>
+        <input type="text" id="customerSearchInput" data-i18n-placeholder="search_customer_placeholder"
+            placeholder="Search customer or plate..." style="width:100%; padding:10px; margin-bottom:10px;"
+            onkeyup="searchCustomers()">
+        <div id="customerSearchResults" style="max-height:300px; overflow-y:auto; border:1px solid #eee;"></div>
+        <div style="margin-top:10px; text-align:right;">
+            <button class="btn btn-secondary" onclick="closeModal('customerSelectModal')"
+                data-i18n="cancel">Cancel</button>
+            <button class="btn btn-primary" onclick="window.location.href='customers.html'" data-i18n="new_customer">+
+                New Customer</button>
+        </div>
+    </div>
+
+    <!-- Add Service Modal -->
+    <div id="serviceAddModal" class="selection-modal">
+        <h3 data-i18n="add_service_title">Add Service</h3>
+        <div class="form-group">
+            <label data-i18n="service_desc">Service Description</label>
+            <input type="text" id="newServiceDesc" placeholder="e.g. Oil Change">
+        </div>
+        <div class="form-group">
+            <label data-i18n="service_cost">Cost</label>
+            <input type="number" id="newServiceDesc" placeholder="0.00">
+        </div>
+        <div style="text-align:right; margin-top:15px;">
+            <button class="btn btn-secondary" onclick="closeModal('serviceAddModal')" data-i18n="cancel">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmAddService()" data-i18n="confirm_add_service">Add</button>
+        </div>
+    </div>
+
+    <!-- Add Part Modal -->
+    <div id="partSelectModal" class="selection-modal">
+        <h3 data-i18n="part_select_title">Select Part</h3>
+        <input type="text" id="partSearchInput" data-i18n-placeholder="search_part_placeholder"
+            placeholder="Search part..." style="width:100%; padding:10px; margin-bottom:10px;" onkeyup="searchParts()">
+        <div id="partSearchResults" style="max-height:300px; overflow-y:auto; border:1px solid #eee;"></div>
+        <div style="text-align:right; margin-top:15px;">
+            <button class="btn btn-secondary" onclick="closeModal('partSelectModal')" data-i18n="cancel">Cancel</button>
+        </div>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay"></div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/visits-app.js"></script>
+</body>
+
+</html>
