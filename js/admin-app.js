@@ -112,19 +112,19 @@ document.addEventListener('DOMContentLoaded', () => {
         fullName: username,
         allowedPages
       });
-    });
-  alert('User created successfully');
-  userForm.reset();
-  loadUsers();
-} catch (e) {
-  alert(e.message);
-}
+
+      alert('User created successfully');
+      userForm.reset();
+      loadUsers();
+    } catch (e) {
+      alert(e.message);
+    }
   });
 
-loadUsers();
+  loadUsers();
 
-// Re-render when language changes if needed (currently dynamic content is minimal)
-window.addEventListener('languageChanged', () => {
-  // loadUsers(); // If user roles or other things need translation in the table
-});
+  // Re-render when language changes if needed (currently dynamic content is minimal)
+  window.addEventListener('languageChanged', () => {
+    // loadUsers(); // If user roles or other things need translation in the table
+  });
 });
