@@ -2,11 +2,17 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tashgeel POS System</title>
   <link rel="stylesheet" href="css/styles.css">
 
 </head>
+
+<!-- ... (body content) ... -->
+
+
 
 <body>
   <!-- Language Switcher -->
@@ -31,6 +37,17 @@
       <!-- License Activation Form -->
       <div id="licenseForm">
         <h3 id="activationTitle" data-i18n-key="activation_required">System Activation Required</h3>
+
+        <!-- Machine ID Display -->
+        <div class="form-group mb-3">
+          <label id="machineIdLabel">Unique Machine ID (Provide this to Admin):</label>
+          <div class="input-group">
+            <input type="text" id="fingerprintDisplay" class="form-control" readonly style="background: #e9ecef;">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyMachineId()">📋 Copy</button>
+          </div>
+          <small class="text-muted">The user should copy this and send it to get their license key.</small>
+        </div>
+
         <div class="form-group">
           <label id="licenseKeyLabel" data-i18n-key="license_key">License Key:</label>
           <input type="text" id="licenseKey" placeholder="Enter your license key">
@@ -95,13 +112,50 @@
 
 
 
+  <script src="js/tauri-adapter.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/translations.js"></script>
   <script>
-    function initLogin() {
-      const fingerprintField = document.getElementById('fingerprintDisplay');
-      const license = JSON.parse(localStorage.getItem("pos_license"));
+    function copyMachineId() {
+      const copyText = document.getElementById("fingerprintDisplay");
+      if (copyText && copyText.value) {
+        copyText.select();
+        document.execCommand("copy");
+        // Simple visual feedback
+        const btn = document.querySelector('button[onclick="copyMachineId()"]');
+        const originalText = btn.textContent;
+        btn.textContent = "✅ Copied!";
+        setTimeout(() => btn.textContent = originalText, 2000);
+      }
+    }
 
+    async function initLogin() {
+      const fingerprintField = document.getElementById('fingerprintDisplay');
+
+      // FIX: Read from EnhancedSecurity or correct LocalStorage key
+      let license = null;
+      if (typeof EnhancedSecurity !== 'undefined') {
+        license = EnhancedSecurity.getLicenseData();
+      }
+      if (!license) {
+        try {
+          license = JSON.parse(localStorage.getItem("pos_backup_license"));
+        } catch (e) { console.log("No license found in backup"); }
+      }
+
+      // 1. Get Machine ID immediately
+      if (window.electronAPI?.getMachineId) {
+        try {
+          const id = await window.electronAPI.getMachineId();
+          if (fingerprintField) fingerprintField.value = id;
+          console.log("Machine ID Loaded:", id);
+        } catch (err) {
+          console.error("Failed to get machine ID:", err);
+          if (fingerprintField) fingerprintField.value = "ERROR: Failed to fetch ID";
+        }
+      }
+
+      // 2. Check Activation
       if (license) {
         document.getElementById("licenseForm").style.display = "none";
         document.getElementById("loginForm").classList.remove("hidden");
@@ -113,17 +167,6 @@
         document.getElementById("activationDate").textContent = new Date(license.activatedAt).toLocaleString();
         return;
       }
-
-      if (fingerprintField && window.electronAPI?.getMachineId) {
-        window.electronAPI.getMachineId().then(id => {
-          fingerprintField.value = id;
-          console.log("Machine Fingerprint:", id);
-        }).catch(err => {
-          console.error("Failed to get machine ID:", err);
-        });
-      } else {
-        console.error("electronAPI or fingerprintField not available");
-      }
     }
 
     async function activateLicense() {
@@ -131,19 +174,16 @@
       const businessName = document.getElementById('businessName').value.trim();
       const licenseError = document.getElementById('licenseError');
 
+      if (!licenseKey) {
+        licenseError.textContent = "❌ Please enter a license key.";
+        return;
+      }
+
       try {
         const realFingerprint = window.electronAPI ? await window.electronAPI.getMachineId() : 'browser-fingerprint';
-        // Mock EnhancedSecurity if not present globally or just use what auth.js provides if any
-        // Assuming EnhancedSecurity is loaded via auth.js or similar? 
-        // Actually auth.js usually handles session. EnhancedSecurity might be in another file?
-        // Please note: The user snippet showed `EnhancedSecurity.activate...`. If `EnhancedSecurity` is not in auth.js, I might need to include it or keep it if it was inline? 
-        // The previous file content shows active use of EnhancedSecurity. I'll assume it's available or I should check. 
-        // Wait, I don't see EnhancedSecurity script included in the previous file content! 
-        // It might be in `js/auth.js` or `js/db.js`.
 
-        // Let's assume it works as before.
         if (typeof EnhancedSecurity !== 'undefined') {
-          const result = EnhancedSecurity.activateLicenseWithFingerprint(licenseKey, businessName, realFingerprint);
+          const result = await EnhancedSecurity.activateLicenseWithFingerprint(licenseKey, realFingerprint);
           if (result.success) {
             // Success logic
             document.getElementById("activationStatus").classList.remove("not-activated");
@@ -152,26 +192,29 @@
 
             document.getElementById("licenseForm").style.display = "none";
             document.getElementById("licenseInfo").classList.remove("hidden");
-            document.getElementById("businessDisplay").textContent = businessName;
-            document.getElementById("activationDate").textContent = new Date().toLocaleString();
+            document.getElementById("businessDisplay").textContent = result.data.businessName;
+            document.getElementById("activationDate").textContent = new Date(result.data.activatedDate).toLocaleString();
             document.getElementById("loginForm").classList.remove("hidden");
+
+            alert("Activation Successful!");
           } else {
-            licenseError.textContent = result.error;
+            licenseError.textContent = "❌ " + result.error;
             licenseError.style.color = "red";
           }
         } else {
-          // Fallback or mock for now if missing
           console.warn("EnhancedSecurity not found");
-          alert("Security module missing.");
+          alert("Security module missing. Please refresh the page.");
         }
 
       } catch (e) {
-        licenseError.textContent = "❌ Failed to retrieve machine fingerprint.";
+        licenseError.textContent = "❌ Error during activation process.";
         console.error(e);
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Data System auto-initializes via auth.js
+      // await EnhancedSecurity.init(); // REMOVED (Legacy)
       initLogin();
 
       const loginForm = document.getElementById('loginForm');
@@ -182,7 +225,7 @@
         const errorDiv = document.getElementById('loginError');
 
         if (window.login(username, password)) {
-          window.location.href = 'visits.html';
+          window.location.href = 'pos.html';
         } else {
           errorDiv.textContent = '❌ Invalid username or password';
           errorDiv.style.color = 'red';

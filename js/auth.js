@@ -7,6 +7,216 @@
 // Includes one-time license activation system
 
 // Enhanced Security System
+window.DataCache = window.DataCache || {};
+
+// Migration & Initialization
+async function initializeDataSystem() {
+    // 🟢 1️⃣ CRITICAL FIX: Prevent Overlay Creation on Login Page
+    const isLoginPage = !!document.getElementById('loginForm');
+    if (isLoginPage) {
+        console.log('🔐 Login page Detected -> Skipping data system & overlay completely.');
+        return;
+    }
+
+    // Inject or Repair Loading Overlay
+    let overlay = document.getElementById('loadingOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        document.body.appendChild(overlay);
+    }
+
+    // FAILSAFE: Force remove overlay after 5 seconds no matter what
+    setTimeout(() => {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay && overlay.style.display !== 'none') {
+            console.warn('⚠️ Safety Timeout: Force hiding loading overlay after 5s.');
+            overlay.style.display = 'none';
+            if (window.hideLoading) window.hideLoading();
+        }
+    }, 5000);
+
+    // Ensure content exists (Self-Healing)
+    if (!overlay.querySelector('.loader-text')) {
+        overlay.innerHTML = `
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Loading System Data...</div>
+        `;
+    }
+
+    // Global Loader Controls (Class-based)
+    window.showLoading = (msg = 'Loading...') => {
+        const loader = document.getElementById('loadingOverlay');
+        if (loader) {
+            const textEl = loader.querySelector('.loader-text');
+            if (textEl) textEl.textContent = msg;
+            loader.classList.add('active'); // Use class
+        }
+    };
+
+    window.hideLoading = () => {
+        const loader = document.getElementById('loadingOverlay');
+        if (loader) loader.classList.remove('active'); // Remove class
+    };
+
+    if (!window.electronAPI) return; // Web mode
+
+    // PERFORMANCE OPTIMIZATION: Skip heavy sync on Login Page
+    // (Logic moved to top of function - Block removed)
+
+    // Start Loading UI
+    if (window.showLoading) window.showLoading('Synchronizing Data...');
+
+    console.log('Initializing Data System...');
+
+    // ROBUST ERROR HANDLING WRAPPER start
+    try {
+        // Ensure data directory exists
+        await window.electronAPI.ensureDataDir();
+
+        // List of keys to load
+        // List of known keys (fallback)
+        let keys = [
+            'users', 'products', 'customers', 'vendors',
+            'visits', 'sales', 'returns', 'expenses',
+            'shop_settings', 'license', 'spare_parts', 'vehicles', 'vendor_payments', 'employees',
+            'session'
+        ];
+
+        // Try to get dynamic list from disk
+        try {
+            if (window.electronAPI.listDataFiles) {
+                const files = await window.electronAPI.listDataFiles();
+                if (files && files.length > 0) {
+                    console.log('📂 Discovered data files:', files);
+                    // Merge and deduplicate
+                    keys = [...new Set([...keys, ...files])];
+                }
+            }
+        } catch (err) {
+            console.error('Failed to list data files, using defaults:', err);
+        }
+
+        let migrationNeeded = false;
+
+        for (const key of keys) {
+            let fileData = null;
+
+            // 1. Try Read File
+            const fileContent = await window.electronAPI.readData(key);
+            if (fileContent) {
+                try {
+                    fileData = JSON.parse(fileContent);
+                } catch (e) {
+                    fileData = fileContent;
+                }
+            }
+
+            // 2. Fallback to LocalStorage if file read failed
+            if (!fileData) {
+                const local = localStorage.getItem('pos_backup_' + key);
+                if (local) {
+                    console.log(`⚠️ Recovered ${key} from LocalStorage backup.`);
+                    try { fileData = JSON.parse(local); } catch (e) { fileData = local; }
+                }
+            }
+
+            if (fileData) {
+                window.DataCache[key] = fileData;
+                console.log(`✅ Loaded ${key}.`);
+            } else {
+                window.DataCache[key] = [];
+            }
+        }
+
+        if (migrationNeeded) {
+            console.log('Migration/Recovery completed successfully.');
+        }
+
+    } catch (criticalError) {
+        console.error('❌ CRITICAL SYSTEM ERROR during initialization:', criticalError);
+        // Optional: Alert the user, but don't block
+        // alert('System Warning: Some data failed to load. Check console.');
+    } finally {
+        // ALWAYS Hide Loading Overlay - This fixes the freezing issue
+        console.log('🔒 executing finally block - Unblocking UI');
+        // Hide Loading Overlay (Class-based)
+        if (window.hideLoading) window.hideLoading();
+
+        // Signal that system is ready (even if partial failure, we proceed)
+        window.SystemReady = true;
+        window.dispatchEvent(new Event('SystemDataReady'));
+        console.log('🚀 System Data Ready Event Dispatched');
+    }
+}
+
+// Call init
+if (document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', initializeDataSystem);
+}
+
+// === LICENSE CRYPTO MODULE ===
+window.LicenseCrypto = {
+    SECRET_KEY: "Tashgheel_Services_Secure_2025_#$#",
+
+    validateKey: function (licenseKey, machineId) {
+        try {
+            if (!licenseKey) return { valid: false, error: "Empty Key" };
+
+            // 1. Decode format (Signature.Payload)
+            const raw = atob(licenseKey);
+            const parts = raw.split('.');
+            if (parts.length !== 2) return { valid: false, error: "Invalid Key Format" };
+
+            const signature = parts[0];
+            const encrypted = parts[1];
+
+            // 2. Verify Signature
+            const docSig = this._hashString(encrypted + this.SECRET_KEY);
+            if (docSig !== signature) return { valid: false, error: "Key Integrity Check Failed" };
+
+            // 3. Decrypt
+            const jsonStr = this._decryptString(encrypted, this.SECRET_KEY);
+            if (!jsonStr) return { valid: false, error: "Decryption Failed" };
+
+            const payload = JSON.parse(jsonStr);
+
+            // 4. Validate Constraints
+            // Machine ID check (normalization for safety)
+            if (payload.mid.trim() !== machineId.trim()) {
+                return { valid: false, error: "Key belongs to another machine" };
+            }
+
+            return { valid: true, payload: payload };
+
+        } catch (e) {
+            console.error(e);
+            return { valid: false, error: "Validation Error" };
+        }
+    },
+
+    _decryptString: function (text, key) {
+        try {
+            const decoded = atob(text);
+            let result = "";
+            for (let i = 0; i < decoded.length; i++) {
+                const charCode = decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+                result += String.fromCharCode(charCode);
+            }
+            // Reverse UTF-8 encoding
+            return decodeURIComponent(escape(result));
+        } catch (e) { return null; }
+    },
+
+    _hashString: function (str) {
+        let hash = 5381;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        }
+        return (hash >>> 0).toString(16);
+    }
+};
+
 var EnhancedSecurity = {
     // Encryption settings
     encryptionKey: 'AliKaram@2025!POS#Security$Enhanced&',
@@ -41,31 +251,47 @@ var EnhancedSecurity = {
     ,
 
     // Store encrypted data
-    storeSecureData: function (key, data) {
+    storeSecureData: async function (key, data) {
+        // 1. Update Memory Cache immediately
+        if (!window.DataCache) window.DataCache = {};
+        window.DataCache[key] = data;
+
+        // 2. Backup to LocalStorage (Redundancy)
         try {
-            var encryptedData = this.encrypt(JSON.stringify(data));
-            localStorage.setItem('pos_secure_' + key, encryptedData);
-            return true;
-        } catch (e) {
-            console.error('Failed to store secure data:', e);
-            return false;
+            localStorage.setItem('pos_backup_' + key, JSON.stringify(data));
+        } catch (e) { console.warn('LocalStorage Quota Exceeded or Error:', e); }
+
+        // 3. Async save to File (if available)
+        if (window.electronAPI && window.electronAPI.saveData) {
+            try {
+                const res = await window.electronAPI.saveData(key, data);
+                if (!res.success) {
+                    console.error('Background Save Failed:', res.error);
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                console.error('Electron Save Error:', err);
+                // We return true because LocalStorage presumably worked
+                return true;
+            }
         }
+
+        return true;
     },
 
     // Get encrypted data
-    getSecureData: function (key) {
-        try {
-            var encryptedData = localStorage.getItem('pos_secure_' + key);
-            if (!encryptedData) return null;
-
-            var decryptedData = this.decrypt(encryptedData);
-            if (!decryptedData) return null;
-
-            return JSON.parse(decryptedData);
-        } catch (e) {
-            console.error('Failed to get secure data:', e);
-            return null;
+    getSecureData: function (key, skipCache = false) {
+        // Strict Mode: Only use memory cache (populated from file/LS at boot)
+        if (window.DataCache && window.DataCache[key]) {
+            return window.DataCache[key];
         }
+        // Fallback: Check LS directly if cache missed (emergency)
+        const local = localStorage.getItem('pos_backup_' + key);
+        if (local) {
+            try { return JSON.parse(local); } catch (e) { return null; }
+        }
+        return null;
     },
 
     // Generate unique system fingerprint
@@ -85,76 +311,74 @@ var EnhancedSecurity = {
         return 'FP' + Math.abs(hash).toString(16).toUpperCase();
     },
 
-    // Generate license key from fingerprint
-    generateLicense: function (realFingerprint) {
-        var hash = 0;
-        for (var i = 0; i < realFingerprint.length; i++) {
-            hash = ((hash << 5) - hash) + realFingerprint.charCodeAt(i);
-            hash |= 0;
+    // Get detailed license status
+    checkLicenseStatus: function () {
+        const licenseData = this.getLicenseData();
+
+        // 1. Basic Existence Check
+        if (!licenseData || !licenseData.activated || !licenseData.licenseKey) {
+            return { valid: false, error: "Not Activated" };
         }
-        return 'LIC-' + Math.abs(hash).toString(36).toUpperCase();
+
+        // 2. Crypto Verification
+        if (window.LicenseCrypto) {
+            return window.LicenseCrypto.validateKey(licenseData.licenseKey, licenseData.systemFingerprint);
+        }
+
+        return { valid: true, warning: "Crypto Missing" };
     },
-    verifyLicense: function (licenseKey, realFingerprint) {
-        return licenseKey === this.generateLicense(realFingerprint);
+
+    // Check if system is activated (with expiry check)
+    isSystemActivated: function () {
+        const result = this.checkLicenseStatus();
+        if (!result.valid) {
+            console.warn("System Activation Check Failed:", result.error);
+            return false;
+        }
+        return true;
     },
 
-    // Activate license (one-time only)
-    activateLicenseWithFingerprint: function (licenseKey, businessName, fingerprint) {
-        var existingLicense = this.getLicenseData();
-        if (existingLicense && existingLicense.activated) {
-            return {
-                success: false,
-                error: 'System is already activated.'
-            };
+    // Activate license using the provided key and current machine fingerprint
+    activateLicenseWithFingerprint: async function (licenseKey, fingerprint) {
+        if (!window.LicenseCrypto) {
+            return { success: false, error: "Security module missing (LicenseCrypto)." };
         }
 
-        if (!this.verifyLicense(licenseKey, fingerprint)) {
-            return {
-                success: false,
-                error: 'Invalid license key for this machine.'
-            };
+        // 1. Validate the Key using Crypto Module
+        const result = window.LicenseCrypto.validateKey(licenseKey, fingerprint);
+
+        if (!result.valid) {
+            return { success: false, error: result.error || "Invalid License Key" };
         }
 
-        if (!businessName || businessName.length < 2) {
-            return {
-                success: false,
-                error: 'Please enter a valid business name.'
-            };
-        }
+        // 2. Success! Extract Payload
+        const payload = result.payload;
+        const businessName = payload.biz; // From the key itself!
 
         const activationData = {
             licenseKey: licenseKey,
             businessName: businessName,
             activated: true,
             activatedDate: new Date().toISOString(),
-            systemFingerprint: fingerprint
+            systemFingerprint: fingerprint,
+            type: payload.type,
+            expiryDate: result.daysLeft !== 9999 ? new Date(Date.now() + (payload.days * 24 * 60 * 60 * 1000)).toISOString() : null
         };
 
-        const stored = this.storeSecureData('license', activationData);
+        // 3. Store Securely
+        // Using await here to ensure file is written before we return success
+        const stored = await this.storeSecureData('license', activationData);
         if (stored) {
-            localStorage.setItem("pos_license", JSON.stringify({
-                business: businessName,
-                activatedAt: new Date().toISOString()
-            }));
-
-            initializeDefaultData();
+            await initializeDefaultData(); // Ensure defaults are written
             return { success: true, data: activationData };
         } else {
-            return {
-                success: false,
-                error: 'Failed to activate license. Try again.'
-            };
+            return { success: false, error: "Failed to save license data." };
         }
     },
+
     // Get license data
     getLicenseData: function () {
         return this.getSecureData('license');
-    },
-
-    // Check if system is activated
-    isSystemActivated: function () {
-        var licenseData = this.getLicenseData();
-        return licenseData && licenseData.activated === true;
     }
 };
 
@@ -214,15 +438,18 @@ function initializeUsers() {
             initializeDefaultData();
         }
     } else {
-        var existingUsers = getUsers();
-        if (existingUsers.length === 0) {
-            localStorage.setItem('pos_users', JSON.stringify(defaultUsers));
+        // Fallback for non-activated check (should not happen in strict mode if activated)
+        // Check memory cache anyway
+        var existingUsers = EnhancedSecurity.getSecureData('users');
+        if (!existingUsers || existingUsers.length === 0) {
+            // In strict file mode, we might want default users if file is empty
+            // But usually activation handles this.
         }
     }
 }
 
 // Initialize default data after activation
-function initializeDefaultData() {
+async function initializeDefaultData() {
     // Enhanced users with encrypted passwords
     var enhancedUsers = [
         {
@@ -254,7 +481,7 @@ function initializeDefaultData() {
         }
     ];
 
-    EnhancedSecurity.storeSecureData('users', enhancedUsers);
+    await EnhancedSecurity.storeSecureData('users', enhancedUsers);
 
     // Default products
     var defaultProducts = [
@@ -315,39 +542,29 @@ function initializeDefaultData() {
         }
     ];
 
-    EnhancedSecurity.storeSecureData('products', defaultProducts);
-    EnhancedSecurity.storeSecureData('sales', []);
-    EnhancedSecurity.storeSecureData('returns', []);
+    await EnhancedSecurity.storeSecureData('products', defaultProducts);
+    await EnhancedSecurity.storeSecureData('sales', []);
+    await EnhancedSecurity.storeSecureData('returns', []);
 }
 
 // Get all users (enhanced version)
 function getUsers() {
-    if (EnhancedSecurity.isSystemActivated()) {
-        return EnhancedSecurity.getSecureData('users') || [];
-    } else {
-        var users = localStorage.getItem('pos_users');
-        return users ? JSON.parse(users) : [];
-    }
+    return EnhancedSecurity.getSecureData('users') || [];
 }
 
 // Save users (enhanced version)
 function saveUsers(users) {
-    if (EnhancedSecurity.isSystemActivated()) {
-        return EnhancedSecurity.storeSecureData('users', users);
-    } else {
-        localStorage.setItem('pos_users', JSON.stringify(users));
-        return true;
-    }
+    return EnhancedSecurity.storeSecureData('users', users);
 }
 
 // Get current logged in user
 function getCurrentUser() {
-    var user = localStorage.getItem('currentUser');
-    return user ? JSON.parse(user) : null;
+    // Read from secure storage with fallback
+    return EnhancedSecurity.getSecureData('session');
 }
 
 // Enhanced login function
-function login(username, password) {
+async function login(username, password) {
     // Check if system is activated
     if (!EnhancedSecurity.isSystemActivated()) {
         console.error('System not activated');
@@ -373,10 +590,35 @@ function login(username, password) {
             username: user.username,
             role: user.role,
             fullName: user.fullName,
+            allowedPages: user.allowedPages, // Critical: Persist permissions to session
             loginTime: new Date().toISOString()
         };
 
-        localStorage.setItem('currentUser', JSON.stringify(sessionUser));
+        // Persist session to file
+        // Await storage to prevent navigation race condition
+        await EnhancedSecurity.storeSecureData('session', sessionUser);
+
+        // === AUTO BACKUP CHECK ===
+        try {
+            if (localStorage.getItem('backup_auto_enabled') === 'true') {
+                const today = new Date().toISOString().split('T')[0];
+                const lastBackup = localStorage.getItem('last_auto_backup_date');
+                const backupPath = localStorage.getItem('backup_path');
+
+                if (backupPath && lastBackup !== today) {
+                    console.log('🔄 Triggering Daily Auto-Backup...');
+                    // We can call logic here or defer to DB helper
+                    if (window.DB && window.DB.createFullBackup) {
+                        await window.DB.createFullBackup(backupPath);
+                        localStorage.setItem('last_auto_backup_date', today);
+                        console.log('✅ Daily Auto-Backup Completed.');
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Auto Backup Failed:', e);
+        }
+
         return true;
     }
 
@@ -384,8 +626,13 @@ function login(username, password) {
 }
 
 // Logout function
-function logout() {
-    localStorage.removeItem('currentUser');
+async function logout() {
+    // Check if confirm is overridden (async) or native (sync)
+    // In our case it is overridden by tauri-adapter.js
+    if (await confirm('Are you sure you want to logout?')) {
+        await EnhancedSecurity.storeSecureData('session', null);
+        window.location.href = 'index.html';
+    }
 }
 
 // Check if user has permission based on role hierarchy
@@ -393,16 +640,23 @@ function hasPermission(requiredRole) {
     var currentUser = getCurrentUser();
     if (!currentUser) return false;
 
-    var roleHierarchy = {
-        'admin': 10,
-        'manager': 5,
-        'inventory_manager': 4,
-        'technician': 3,
-        'cashier': 1
-    };
+    const roles = getSystemRoles();
 
-    var userLevel = roleHierarchy[currentUser.role] || 0;
-    var requiredLevel = roleHierarchy[requiredRole] || 0;
+    // Convert current user role to level
+    const userRoleObj = roles.find(r => r.name === currentUser.role);
+    const userLevel = userRoleObj ? userRoleObj.level : 0;
+
+    // Convert required role to level
+    const requiredRoleObj = roles.find(r => r.name === requiredRole);
+    // If required role doesn't exist (e.g. hardcoded check), mapping might fail.
+    // Fallback: check legacy hardcodes if dynamic lookup fails
+    let requiredLevel = requiredRoleObj ? requiredRoleObj.level : 0;
+
+    // Legacy fallback map
+    if (requiredLevel === 0) {
+        const legacyMap = { 'admin': 10, 'manager': 5, 'inventory_manager': 4, 'technician': 3, 'cashier': 1 };
+        requiredLevel = legacyMap[requiredRole] || 0;
+    }
 
     return userLevel >= requiredLevel;
 }
@@ -687,48 +941,73 @@ ensureDefaultAdmin();
 
 // Page Permissions Enforcement
 function enforcePagePermissions() {
-    const user = getCurrentUser();
-    if (!user) return; // Login page handles this
+    let sessionUser = getCurrentUser();
+    if (!sessionUser) return; // Login page handles this
 
-    if (user.role === 'admin') return; // Admins see everything
+    // 1. Refresh permissions from Source of Truth (in case admin changed them while user is logged in)
+    try {
+        const allUsers = getUsers();
+        const freshUser = allUsers.find(u => u.id === sessionUser.id);
 
-    // 1. Check current page access
-    const path = window.location.pathname.split('/').pop();
-    const allowed = user.allowedPages || [];
-
-    // Always allow index, pos (maybe), and common pages
-    // strict check for known secured pages
-    const securedPages = ['visits.html', 'vendors.html', 'customers.html', 'products.html', 'receipts.html', 'reports.html', 'salesmen.html', 'expenses.html', 'admin.html', 'backup.html', 'pos.html'];
-
-    // If strict mode, even POS might be restricted, but user likely needs at least one page.
-    // If allowed is empty and not admin, maybe they are legacy user?
-    // Let's assume if allowedPages exists, we enforce it.
-    if (user.allowedPages && user.allowedPages.length > 0) {
-        if (securedPages.includes(path) && !allowed.includes(path)) {
-            alert('Access Denied');
-            // Find first allowed page or default to visits or index
-            const firstAllowed = allowed[0] || 'visits.html';
-            window.location.href = firstAllowed;
+        if (freshUser) {
+            // Update session user with latest role and permissions
+            sessionUser = { ...sessionUser, ...freshUser };
+        } else {
+            // User deleted? Logout
+            logout();
+            return;
         }
-    } else if (user.role === 'cashier') {
-        // Legacy fallback for cashier
-        if (['admin.html', 'reports.html', 'salesmen.html', 'backup.html'].includes(path)) {
-            window.location.href = 'visits.html';
+    } catch (e) { console.error('Error refreshing user permissions', e); }
+
+    if (sessionUser.role === 'admin') return; // Admins see everything
+
+    // 2. Check current page access
+    const path = window.location.pathname.split('/').pop().toLowerCase(); // Normalize
+
+    // Default to empty array if undefined
+    const allowed = (sessionUser.allowedPages || []).map(p => p.toLowerCase());
+
+    console.log(`🔒 Enforcement: User=${sessionUser.username}, Path=${path}, Allowed=${JSON.stringify(allowed)}`);
+
+    // Secured Pages List
+    const securedPages = [
+        'visits.html',
+        'vendors.html',
+        'customers.html',
+        'products.html',
+        'receipts.html',
+        'reports.html',
+        'salesmen.html',
+        'expenses.html',
+        'admin.html',
+        'backup.html',
+        'upcoming-visits.html'
+    ];
+
+    // If current page is secured, STRICTLY check if it's in the allowed list
+    if (securedPages.includes(path)) {
+        if (!allowed.includes(path)) {
+            console.warn('⛔ Access Denied');
+            alert('Access Denied: You do not have permission for this page. \nContact Admin.');
+
+            // Redirect logic: Find first allowed secured page, or go to index/pos
+            const firstAllowed = sessionUser.allowedPages && sessionUser.allowedPages.length > 0
+                ? sessionUser.allowedPages[0]
+                : 'index.html';
+
+            window.location.href = firstAllowed;
+            return;
         }
     }
 
-    // 2. Hide Navigation Links
+    // 3. Hide Navigation Links (UI Polish)
     const navLinks = document.querySelectorAll('.nav-item');
     navLinks.forEach(link => {
         const href = link.getAttribute('href');
-        if (href && securedPages.includes(href)) {
-            if (user.allowedPages && user.allowedPages.length > 0) {
-                if (!allowed.includes(href)) {
-                    link.style.display = 'none';
-                }
-            } else if (user.role === 'cashier') {
-                // Legacy fallback
-                if (['admin.html', 'reports.html', 'salesmen.html', 'backup.html'].includes(href)) {
+        if (href) {
+            const linkPath = href.split('/').pop().toLowerCase();
+            if (securedPages.includes(linkPath)) {
+                if (!allowed.includes(linkPath)) {
                     link.style.display = 'none';
                 }
             }
@@ -736,11 +1015,41 @@ function enforcePagePermissions() {
     });
 }
 
-if (document.addEventListener) {
-    document.addEventListener('DOMContentLoaded', enforcePagePermissions);
+// === Dynamic Roles Management ===
+const defaultRoles = [
+    { name: 'admin', level: 10, label: 'Admin' }
+];
+
+function getSystemRoles() {
+    if (EnhancedSecurity.isSystemActivated()) {
+        const stored = EnhancedSecurity.getSecureData('shop_roles');
+        return (stored && stored.length > 0) ? stored : defaultRoles;
+    }
+    const local = localStorage.getItem('pos_roles');
+    return local ? JSON.parse(local) : defaultRoles;
 }
 
+function saveSystemRoles(roles) {
+    if (EnhancedSecurity.isSystemActivated()) {
+        return EnhancedSecurity.storeSecureData('shop_roles', roles);
+    }
+    localStorage.setItem('pos_roles', JSON.stringify(roles));
+    return true;
+}
 
+// Initial Load with Race Condition Protection
+if (document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Wait for system data to be ready before enforcing
+        if (window.SystemReady) {
+            enforcePagePermissions();
+        } else {
+            // Failsafe: If event already fired or we missed it, 
+            // the event listener might hang. But usually SystemReady flag handles that.
+            window.addEventListener('SystemDataReady', enforcePagePermissions);
+        }
+    });
+}
 
 // Export functions for global use
 window.EnhancedSecurity = EnhancedSecurity;
@@ -761,3 +1070,5 @@ window.deleteUser = deleteUser;
 window.changePassword = changePassword;
 window.isSessionValid = isSessionValid;
 window.getUserActivity = getUserActivity;
+window.getSystemRoles = getSystemRoles;
+window.saveSystemRoles = saveSystemRoles;

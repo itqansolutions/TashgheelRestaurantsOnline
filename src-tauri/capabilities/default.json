@@ -1,0 +1,17 @@
+{
+    "identifier": "default",
+    "description": "Default permissions for the app",
+    "local": true,
+    "windows": [
+        "main"
+    ],
+    "permissions": [
+        "core:default",
+        "core:webview:allow-internal-toggle-devtools",
+        "fs:default",
+        "fs:allow-read-text-file",
+        "fs:allow-write-text-file",
+        "shell:allow-open",
+        "dialog:default"
+    ]
+}

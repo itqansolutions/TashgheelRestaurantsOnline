@@ -64,10 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (type === 'sales') {
       let totalServices = 0, totalParts = 0, totalDiscount = 0;
+      let cashTotal = 0, cardTotal = 0, mobileTotal = 0;
 
       const calcTotals = (arr, sign = 1) => {
         arr.forEach(r => {
           let rDiscount = 0;
+          let rTotal = 0;
+
           r.items.forEach(i => {
             const d = i.discount?.type === 'percent'
               ? i.price * i.discount.value / 100 * i.qty
@@ -80,19 +83,41 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
               totalParts += sign * netPrice;
             }
+            rTotal += netPrice;
           });
+
           totalDiscount += sign * rDiscount;
+          const finalTotal = sign * (rTotal - rDiscount); // Net for this receipt
+
+          // Payment Method Breakdown
+          const method = (r.method || 'cash').toLowerCase();
+          if (method === 'card' || method === 'visa') {
+            cardTotal += finalTotal;
+          } else if (method === 'mobile') {
+            mobileTotal += finalTotal;
+          } else {
+            cashTotal += finalTotal;
+          }
         });
       };
 
       calcTotals(finished, 1);
 
       document.getElementById('total-sales-cash').innerHTML = `
-        <div><strong>🔧 ${t("Services Total", "إجمالي الخدمات")}:</strong> ${safe(totalServices).toFixed(2)} ${t('EGP', 'ج.م')}</div>
-        <div><strong>📦 ${t("Spare Parts Total", "إجمالي قطع الغيار")}:</strong> ${safe(totalParts).toFixed(2)} ${t('EGP', 'ج.م')}</div>
+        <div style="margin-bottom:10px;">
+           <div><strong>🔧 ${t("Services Total", "إجمالي الخدمات")}:</strong> ${safe(totalServices).toFixed(2)} ${t('EGP', 'ج.م')}</div>
+           <div><strong>📦 ${t("Spare Parts Total", "إجمالي قطع الغيار")}:</strong> ${safe(totalParts).toFixed(2)} ${t('EGP', 'ج.م')}</div>
+        </div>
+        <hr style="margin:5px 0; border:0; border-top:1px dashed #ccc;">
+        <div><strong>💵 ${t("Cash", "نقدي")}:</strong> ${safe(cashTotal).toFixed(2)} ${t('EGP', 'ج.م')}</div>
       `;
-      document.getElementById('total-sales-card').style.display = 'none';
-      document.getElementById('total-sales-mobile').style.display = 'none';
+
+      document.getElementById('total-sales-card').textContent = safe(cardTotal).toFixed(2) + ' ' + t('EGP', 'ج.م');
+      document.getElementById('total-sales-mobile').textContent = safe(mobileTotal).toFixed(2) + ' ' + t('EGP', 'ج.م');
+
+      // Ensure elements are visible
+      document.getElementById('total-sales-card').parentNode.style.display = 'block';
+      document.getElementById('total-sales-mobile').parentNode.style.display = 'block';
 
       document.getElementById('total-discounts').textContent = safe(totalDiscount).toFixed(2) + ' ' + t('EGP', 'ج.م');
     }
@@ -159,8 +184,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const count = relevantVisits.length;
       const totalRevenue = relevantVisits.reduce((sum, v) => sum + (v.finalTotal || 0), 0);
 
+      const activeVisits = visits.filter(v => v.status !== 'Completed').length;
+
       document.getElementById('visits-count').textContent = count;
       document.getElementById('visits-price').textContent = totalRevenue.toFixed(2) + ' ' + t('EGP', 'ج.م');
+
+      // Add info about active visits if any
+      if (activeVisits > 0) {
+        const info = document.createElement('div');
+        info.style.color = '#e67e22';
+        info.style.marginTop = '10px';
+        info.innerHTML = `<strong>⚠️ ${activeVisits} ${t('Active/Draft Visits', 'زيارات نشطة/مسودة')}</strong> (${t('not included in reports', 'غير مدرجة في التقارير')})`;
+        document.getElementById('visits-price').parentNode.parentNode.appendChild(info);
+      }
 
       const map = relevantVisits.map(v => ({
         date: new Date(v.completedAt || v.createdAt).toLocaleDateString(),
@@ -410,68 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getAllReceipts() {
-    const receipts = [];
-    const partsMap = {};
-    const allParts = window.DB.getParts();
-    if (allParts) {
-      allParts.forEach(p => partsMap[p.id] = p);
-    }
-
-    // 1. Existing POS Receipts (Legacy)
-    for (let key in localStorage) {
-      if (key.startsWith('receipt_')) {
-        try {
-          const r = JSON.parse(localStorage.getItem(key));
-          if (r && typeof r === 'object') receipts.push(r);
-        } catch { }
-      }
-    }
-
-    // 2. Service Visits (Mapped to Receipt structure for reporting)
-    const visits = window.DB.getVisits().filter(v => v.status === 'Completed');
-    visits.forEach(v => {
-      const items = [];
-
-      // Map Parts
-      v.parts.forEach(p => {
-        const dbPart = partsMap[p.partId] || partsMap[p.id];
-        const cost = p.cost || (dbPart ? dbPart.cost : 0) || 0;
-
-        items.push({
-          code: p.partId || p.id,
-          name: p.name,
-          qty: p.qty,
-          price: p.price,
-          cost: cost,
-          discount: 0
-        });
-      });
-
-      // Map Services
-      v.services.forEach(s => {
-        items.push({
-          code: 'SVC-' + Math.random().toString(36).substr(2, 5),
-          name: s.name,
-          qty: 1,
-          price: s.cost || 0,
-          cost: 0,
-          discount: 0
-        });
-      });
-
-      receipts.push({
-        id: v.id,
-        date: v.completedAt || v.createdAt,
-        items: items,
-        method: v.paymentMethod || 'cash',
-        status: 'finished',
-        cashier: v.technician || 'Technician',
-        total: v.finalTotal,
-        discount: v.discount
-      });
-    });
-
-    return receipts;
+    return window.DB ? window.DB.getSales() : [];
   }
 
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');

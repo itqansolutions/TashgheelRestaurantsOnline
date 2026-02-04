@@ -1,7 +1,7 @@
 const translations = {
     // Navigation
     nav_pos: { en: "🛒 Point of Sale", ar: "🛒 نقطة البيع" },
-    nav_products: { en: "📦 Spare Parts", ar: "📦 قطع الغيار" },
+    nav_products: { en: "🍔 Menu Items", ar: "🍔 قائمة الطعام" },
     nav_receipts: { en: "🧾 Receipts", ar: "🧾 الفواتير" },
     nav_reports: { en: "📈 Reports", ar: "📈 التقارير" },
     nav_salesmen: { en: "👔 Employees", ar: "👔 الموظفين" },
@@ -9,6 +9,7 @@ const translations = {
     nav_admin: { en: "⚙️ Admin Panel", ar: "⚙️ لوحة التحكم" },
     nav_backup: { en: "💾 Backup", ar: "💾 النسخ الاحتياطي" },
     nav_visits: { en: "🔧 Service Visits", ar: "🔧 زيارات الخدمة" },
+    nav_upcoming: { en: "📅 Upcoming Visits", ar: "📅 الزيارات القادمة" },
     nav_vendors: { en: "🏪 Vendors", ar: "🏪 الموردين" },
     nav_customers: { en: "👥 Customers", ar: "👥 العملاء" },
     logout: { en: "🚪 Logout", ar: "🚪 تسجيل الخروج" },
@@ -129,6 +130,23 @@ const translations = {
     confirm_clear_cart: { en: "Clear cart?", ar: "مسح السلة؟" },
 
 
+    // POS Order Types & Tables
+    order_type: { en: "Order Type", ar: "نوع الطلب" },
+    dine_in: { en: "🍽️ Dine In", ar: "🍽️ صالة" },
+    take_away: { en: "🥡 Take Away", ar: "🥡 تيك أواي" },
+    delivery: { en: "🛵 Delivery", ar: "🛵 توصيل" },
+    table_label: { en: "Table:", ar: "الطاولة:" },
+    select_table: { en: "Select Table", ar: "اختر الطاولة" },
+    table: { en: "Table", ar: "طاولة" },
+    waiter: { en: "Waiter:", ar: "الويتر:" },
+    alert_select_table: { en: "Please select a table for Dine In orders.", ar: "يرجى اختيار طاولة للطلبات الداخلية." },
+    alert_select_waiter: { en: "Please select a waiter for Dine In orders.", ar: "يرجى اختيار ويتر للطلبات الداخلية." },
+    alert_select_delivery_man: { en: "Please select a Delivery Man.", ar: "يرجى اختيار الطيار." },
+    role_salesman: { en: "Salesman / Waiter", ar: "بائع / ويتر" },
+    role_delivery: { en: "Delivery Man", ar: "طيار" },
+    role: { en: "Role", ar: "الوظيفة" },
+    delivery_man: { en: "Delivery Man:", ar: "الطيار:" },
+
     // Login & Activation
     shop_pos_system: { en: "Tashgeel POS System", ar: "نظام تشغيل لإدارة المبيعات" },
     enhanced_security: { en: "Powered By itqan", ar: "بواسطة اتقان" },
@@ -217,12 +235,21 @@ const translations = {
     barcode: { en: "Barcode", ar: "الباركود" },
     price: { en: "Price", ar: "السعر" },
     cost: { en: "Cost", ar: "التكلفة" },
-    product_list: { en: "Spare Parts List", ar: "قائمة قطع الغيار" },
+    image: { en: "Image", ar: "صورة" },
+    image_url: { en: "Image URL", ar: "رابط الصورة" },
+    product_list: { en: "Menu Items List", ar: "قائمة الأصناف" },
     manage_categories: { en: "Manage Categories", ar: "إدارة التصنيفات" },
     new_category: { en: "New Category", ar: "تصنيف جديد" },
     add_category: { en: "Add Category", ar: "إضافة تصنيف" },
-    part_no: { en: "Part No", ar: "رقم القطعة" },
-    part_name: { en: "Part Name", ar: "اسم القطعة" },
+    allowed_addons: { en: "Allowed Add-ons (Extras)", ar: "الإضافات المتاحة" },
+    addons_hint: { en: "Select items from the 'Add-ons' category.", ar: "اختر عناصر من تصنيف 'الإضافات'." },
+    allow_all_addons: { en: "Allow All Add-ons", ar: "إتاحة جميع الإضافات" },
+    select_addons: { en: "Select Extras", ar: "اختر الإضافات" },
+    select_size: { en: "Select Size", ar: "اختر الحجم" },
+    add_to_cart: { en: "Add to Cart", ar: "إضافة للسلة" },
+    net_qty: { en: "Net Qty", ar: "الكمية الصافية" },
+    part_no: { en: "Code", ar: "الكود" },
+    part_name: { en: "Item Name", ar: "اسم الصنف" },
     actual_stock: { en: "Actual Stock", ar: "الرصيد الفعلي" },
     difference: { en: "Difference", ar: "الفرق" },
     stock_audit: { en: "Stock Audit", ar: "جرد المخزون" },
@@ -314,6 +341,24 @@ const translations = {
     select_customer_vehicle: { en: "Select Customer & Vehicle", ar: "اختر العميل والمركبة" },
     search_customer_placeholder: { en: "Search customer or plate...", ar: "بحث عن عميل أو لوحة..." },
     new_customer: { en: "+ New Customer", ar: "+ عميل جديد" },
+    // Upcoming Visits Page
+    upcoming_visits_title: { en: "📅 Upcoming Visits", ar: "📅 الزيارات القادمة" },
+    from_date: { en: "From Date", ar: "من تاريخ" },
+    to_date: { en: "To Date", ar: "إلى تاريخ" },
+    status_filter: { en: "Status", ar: "الحالة" },
+    all: { en: "All", ar: "الكل" },
+    overdue: { en: "Overdue", ar: "متأخرة" },
+    today: { en: "Today", ar: "اليوم" },
+    tomorrow: { en: "Tomorrow", ar: "غداً" },
+    this_week: { en: "This Week", ar: "هذا الأسبوع" },
+    days: { en: "days", ar: "أيام" },
+    apply_filter: { en: "Apply", ar: "تطبيق" },
+    go_to_visits: { en: "Go to Visits", ar: "الذهاب للزيارات" },
+    no_upcoming_found: { en: "No upcoming visits found matching filters", ar: "لا توجد زيارات قادمة تطابق البحث" },
+    service: { en: "Service", ar: "الخدمة" },
+
+    // Existing:
+    customer_vehicle: { en: "Customer & Vehicle", ar: "العميل والمركبة" },
 };
 
 function setLanguage(lang) {
@@ -395,3 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Expose to window
+window.translations = translations;

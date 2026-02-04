@@ -1,0 +1,12 @@
+{
+    "identifier": "default",
+    "description": "Permissions for custom app commands",
+    "commands": [
+        "get_machine_id",
+        "select_backup_folder",
+        "save_backup_file",
+        "check_file_exists",
+        "read_json",
+        "write_json"
+    ]
+}

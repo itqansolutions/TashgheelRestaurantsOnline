@@ -24,52 +24,47 @@ const t = (keyOrEn, ar) => {
     return keyOrEn;
 };
 
-function loadServiceReceipts() {
+async function loadServiceReceipts() {
+    // EnhancedSecurity.init() is now auto-handled by auth.js
     const tbody = document.getElementById('receiptsTableBody');
     if (!tbody) return;
 
-    // Get all visits
-    const visits = window.DB ? window.DB.getVisits() : [];
+    // Get all sales
+    const sales = window.DB ? window.DB.getSales() : [];
 
-    // Filter completed visits only
-    const completedVisits = visits.filter(v => v.status === 'Completed');
-
-    // Get search term
+    // Filters
+    const statusFilter = document.getElementById('statusFilter')?.value;
     const searchTerm = document.getElementById('receiptSearch')?.value.toLowerCase() || '';
 
-    // Filter by search
-    const filtered = completedVisits.filter(v => {
-        const customer = window.DB.getCustomers().find(c => c.id === v.customerId);
-        const searchText = `${v.id} ${customer?.name || ''} ${customer?.mobile || ''}`.toLowerCase();
+    // Filter
+    const filtered = sales.filter(s => {
+        if (statusFilter && s.status !== statusFilter) return false;
+        const searchText = `${s.id} ${s.cashier} ${s.salesman || ''}`.toLowerCase();
         return searchText.includes(searchTerm);
     });
 
     // Sort by date (newest first)
-    filtered.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Render table
+    // Render
     tbody.innerHTML = '';
-
     if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center">${t('No receipts found', 'لا توجد فواتير')}</td></tr>`;
         return;
     }
 
-    filtered.forEach(visit => {
-        const customer = window.DB.getCustomers().find(c => c.id === visit.customerId);
-        const vehicle = window.DB.getVehicles().find(v => v.id === visit.vehicleId);
-
+    filtered.forEach(sale => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${visit.id}</td>
-            <td>${new Date(visit.completedAt).toLocaleDateString()}</td>
-            <td>${customer?.name || 'N/A'}</td>
-            <td>${vehicle?.plateNumber || 'N/A'}</td>
-            <td>${visit.finalTotal.toFixed(2)}</td>
-            <td><span class="badge badge-success">${t('Completed', 'مكتمل')}</span></td>
+            <td>${sale.id}</td>
+            <td>${new Date(sale.date).toLocaleString()}</td>
+            <td>${sale.cashier}</td>
+            <td>${t(sale.method)}</td>
+            <td>${sale.total.toFixed(2)}</td>
+            <td><span class="badge badge-success">${t(sale.status)}</span></td>
             <td>-</td>
             <td>
-                <button class="btn btn-sm btn-primary" onclick="viewServiceInvoice('${visit.id}')">👁️ ${t('View', 'عرض')}</button>
+                <button class="btn btn-sm btn-primary" onclick="window.printStoredReceipt('${sale.id}')">👁️ ${t('View', 'عرض')}</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -254,4 +249,133 @@ window.logout = function () {
         localStorage.removeItem('currentUser');
         window.location.href = 'index.html';
     }
+};
+
+// ===================== PRINT RECEIPT MODULE =====================
+window.printStoredReceipt = function (receiptId) {
+    const sales = window.DB ? window.DB.getSales() : [];
+    const receipt = sales.find(s => s.id === receiptId);
+
+    if (!receipt) {
+        alert(t('receipt_not_found') + ": " + receiptId);
+        return;
+    }
+
+    const shopName = localStorage.getItem('shopName') || 'Tashgheel Restaurant';
+    const shopAddress = localStorage.getItem('shopAddress') || '';
+    const shopFooter = localStorage.getItem('footerMessage') || 'Thank you for your visit!';
+    const shopLogo = localStorage.getItem('shopLogo') || '';
+
+    const lang = localStorage.getItem('pos_language') || 'en';
+    const isArabic = lang === 'ar';
+    const dir = isArabic ? 'rtl' : 'ltr';
+
+    let totalDiscount = 0;
+    let subtotal = 0;
+
+    const itemsHtml = receipt.items.map(item => {
+        // item.price is usually the unit price. 
+        // We need to calculate if discount was applied or if it's already net.
+        // POS-APP processSale: item.price is FINAL unit price (after addons).
+        // item.discount is stored. 
+        // But calculateTotal uses item.price... 
+        // Let's rely on stored totals for simplicity if possible, but receipt needs line items.
+        // Let's derive from current values.
+
+        let unitPrice = item.price;
+        let discountAmount = 0;
+
+        // If discount type is percent, then item.price IS the base price? 
+        // pos-app.js calculateTotal applies discount TO price. So item.price is PRE-discount.
+        // Yes: calculateTotal -> let finalPrice = i.price; if percent finalPrice *= ...
+
+        const lineTotalRaw = item.price * item.qty;
+
+        if (item.discount?.type === "percent") {
+            discountAmount = lineTotalRaw * (item.discount.value / 100);
+        } else if (item.discount?.type === "value") {
+            discountAmount = item.discount.value; // Total discount value for line or per unit?
+            // pos-app.js: finalPrice -= item.discount.value. This means PER UNIT.
+            discountAmount = item.discount.value * item.qty;
+        }
+
+        const lineTotalNet = lineTotalRaw - discountAmount;
+
+        subtotal += lineTotalRaw;
+        totalDiscount += discountAmount;
+
+        return `
+            <tr style="border-bottom: 1px dashed #ddd;">
+                <td style="padding: 5px; text-align: ${isArabic ? 'right' : 'left'};">
+                    ${item.name} <br>
+                    <small style="color:#777;">${item.qty} x ${item.price.toFixed(2)}</small>
+                </td>
+                <td style="padding: 5px; text-align: ${isArabic ? 'left' : 'right'};">
+                    ${lineTotalNet.toFixed(2)}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    const receiptHTML = `
+        <div id="receiptModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; display:flex; justify-content:center; align-items:center;">
+            <div style="background:white; padding:20px; width:300px; max-height:90vh; overflow-y:auto; font-family: 'Courier New', monospace; direction: ${dir}; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                
+                <div style="text-align:center; margin-bottom:10px;">
+                    ${shopLogo ? `<img src="${shopLogo}" style="max-height:60px; margin-bottom:5px;">` : ''}
+                    <h3 style="margin:5px 0;">${shopName}</h3>
+                    <p style="margin:0; font-size:12px;">${shopAddress}</p>
+                    <p style="margin:5px 0; font-size:12px;">${new Date(receipt.date).toLocaleString()}</p>
+                    <p style="margin:0; font-size:12px;">#${receipt.id}</p>
+                </div>
+
+                <hr style="border-top: 1px dashed #000;">
+
+                <table style="width:100%; font-size:14px; border-collapse: collapse;">
+                    ${itemsHtml}
+                </table>
+
+                <hr style="border-top: 1px dashed #000;">
+
+                <div style="display:flex; justify-content:space-between; font-size:14px;">
+                    <span>${t('subtotal', 'المجموع')}</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                </div>
+                ${totalDiscount > 0 ? `
+                <div style="display:flex; justify-content:space-between; font-size:14px; color:red;">
+                    <span>${t('discount', 'الخصم')}</span>
+                    <span>-${totalDiscount.toFixed(2)}</span>
+                </div>
+                ` : ''}
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px; margin-top:5px;">
+                    <span>${t('total', 'الإجمالي')}</span>
+                    <span>${receipt.total.toFixed(2)}</span>
+                </div>
+
+                <hr style="border-top: 1px dashed #000;">
+
+                <div style="text-align:center; font-size:12px; margin-top:10px;">
+                    <p>${shopFooter}</p>
+                    <p>${t('cashier', 'الكاشير')}: ${receipt.cashier}</p>
+                </div>
+
+                <div style="margin-top:20px; text-align:center;" class="no-print">
+                    <button onclick="window.print()" class="btn btn-primary btn-sm">🖨️ ${t('print', 'طباعة')}</button>
+                    <button onclick="document.getElementById('receiptModal').remove()" class="btn btn-secondary btn-sm">❌ ${t('close', 'إغلاق')}</button>
+                </div>
+
+                <style>
+                    @media print {
+                        .no-print { display: none; }
+                        body * { visibility: hidden; }
+                        #receiptModal, #receiptModal * { visibility: visible; }
+                        #receiptModal { position: absolute; left: 0; top: 0; width: 100%; height: auto; background: none; }
+                        #receiptModal > div { box-shadow: none; width: 100%; max-width: 100%; }
+                    }
+                </style>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', receiptHTML);
 };

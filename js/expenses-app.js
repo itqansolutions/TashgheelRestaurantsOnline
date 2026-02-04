@@ -1,4 +1,5 @@
 // expenses-app.js
+window.currentPage = 'expenses';
 document.addEventListener('DOMContentLoaded', () => {
   // Hybrid Translation Helper
   const t = (keyOrEn, ar) => {

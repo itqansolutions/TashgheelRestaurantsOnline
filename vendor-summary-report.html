@@ -71,21 +71,9 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>Tashgheel Services</h2>
+                <h2>Restaurant POS</h2>
             </div>
-            <nav>
-                <a href="visits.html" class="nav-item">🔧 Service Visits</a>
-                <a href="vendors.html" class="nav-item">🏪 Vendors</a>
-                <a href="customers.html" class="nav-item">👥 Customers</a>
-                <a href="products.html" class="nav-item">📦 Spare Parts</a>
-                <a href="receipts.html" class="nav-item">🧾 Receipts</a>
-                <a href="reports.html" class="nav-item">📈 Reports</a>
-                <a href="vendor-summary-report.html" class="nav-item active">📊 Vendor Report</a>
-                <a href="salesmen.html" class="nav-item">👔 Employees</a>
-                <a href="expenses.html" class="nav-item">💰 Expenses</a>
-                <a href="admin.html" class="nav-item">⚙️ Admin Panel</a>
-                <a href="#" onclick="handleLogout(); return false;" class="nav-item">🚪 Logout</a>
-            </nav>
+            <nav><!-- Populated by shared-nav.js --></nav>
         </aside>
 
         <!-- Main Content -->
@@ -142,6 +130,9 @@
 
     <script src="js/auth.js"></script>
     <script src="js/db.js"></script>
+    <script>window.currentPage = 'vendors';</script>
+    <script src="js/shared-nav.js"></script>
+    <script src="js/translations.js"></script>
     <script src="js/vendor-summary-report.js"></script>
 </body>
 

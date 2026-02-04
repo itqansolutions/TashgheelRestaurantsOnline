@@ -12,6 +12,8 @@ const t = (keyOrEn, ar) => {
     return keyOrEn;
 };
 
+// vendors-app.js
+window.currentPage = 'vendors';
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Vendors page loading...');
 
@@ -169,6 +171,11 @@ function handlePaymentSubmit(e) {
 // Print Vendor Transaction Report
 window.printVendorReport = function printVendorReport(vendorId) {
     console.log('printVendorReport called with vendorId:', vendorId);
+
+    // Define lang early
+    const lang = localStorage.getItem('pos_language') || 'en';
+    const isRTL = lang === 'ar';
+
     const vendor = window.DB.getVendor(vendorId);
     if (!vendor) {
         console.error('Vendor not found:', vendorId);
@@ -205,7 +212,7 @@ window.printVendorReport = function printVendorReport(vendorId) {
     console.log('Payment transactions:', payments);
 
     // Combine and sort all transactions
-    const allTransactions = [
+    let allTransactions = [
         ...purchases,
         ...payments.map(pay => ({
             date: pay.date,
@@ -215,6 +222,26 @@ window.printVendorReport = function printVendorReport(vendorId) {
         }))
     ].sort((a, b) => new Date(a.date) - new Date(b.date));
 
+    // Calculate sum of known transactions
+    const totalTransactionValue = allTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const recordedCredit = parseFloat(vendor.credit || 0);
+
+    // If there is a mismatch, insert an "Opening Balance" transaction to reconcile
+    // Mismatch = Actual (Stored) - Calculated
+    // If mismatch is significant (e.g. > 0.01)
+    const mismatch = recordedCredit - totalTransactionValue;
+
+    if (Math.abs(mismatch) > 0.01) {
+        // Prepend opening balance
+        allTransactions.unshift({
+            date: vendor.createdAt || new Date().toISOString(),
+            type: 'Opening Balance',
+            amount: mismatch,
+            description: t('Previous Balance / Adjustment', 'رصيد سابق / تسوية'),
+            isAdjustment: true
+        });
+    }
+
     // Calculate running balance
     let balance = 0;
     const transactionsWithBalance = allTransactions.map(t => {
@@ -222,7 +249,7 @@ window.printVendorReport = function printVendorReport(vendorId) {
         return {
             ...t,
             balance,
-            displayDate: t.date ? new Date(t.date).toLocaleDateString('en-US', {
+            displayDate: t.date ? new Date(t.date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
@@ -234,94 +261,85 @@ window.printVendorReport = function printVendorReport(vendorId) {
     const shopName = localStorage.getItem('shopName') || 'Tashgheel Services';
     const shopLogo = localStorage.getItem('shopLogo') || '';
 
-    const lang = localStorage.getItem('pos_language') || 'en';
-    const isRTL = lang === 'ar';
-
+    // Inject Modal Report
     const reportHTML = `
-        <!DOCTYPE html>
-        <html lang="${lang}" dir="${isRTL ? 'rtl' : 'ltr'}">
-        <head>
-            <title>Vendor Report - ${vendor.name}</title>
+        <div id="reportModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,1); z-index:99999; overflow-y:auto; font-family: Arial, sans-serif; direction: ${isRTL ? 'rtl' : 'ltr'};">
+            <div style="max-width:800px; margin:20px auto; padding:20px; background:white;">
+                <div class="header" style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2c3e50; padding-bottom: 20px;">
+                    ${shopLogo ? `<img src="${shopLogo}" alt="Logo" style="max-height: 80px; margin-bottom: 10px;">` : ''}
+                    <h1 style="margin: 10px 0; color: #2c3e50;">${shopName}</h1>
+                    <h2 style="margin: 5px 0; font-size:1.2em;">${t('Vendor Transaction Report', 'تقرير معاملات المورد')}</h2>
+                </div>
+
+                <div class="vendor-info" style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                    <h3 style="margin-top:0;">${t('Vendor', 'المورد')}: ${vendor.name}</h3>
+                    <p><strong>${t('Contact', 'جهة الاتصال')}:</strong> ${vendor.contact || 'N/A'}</p>
+                    <p><strong>${t('Phone', 'الهاتف')}:</strong> ${vendor.mobile || 'N/A'}</p>
+                    <p><strong>${t('Report Date', 'تاريخ التقرير')}:</strong> ${new Date().toLocaleDateString()}</p>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <thead>
+                        <tr style="background: #34495e; color: white;">
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: ${isRTL ? 'right' : 'left'};">${t('Date', 'التاريخ')}</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: ${isRTL ? 'right' : 'left'};">${t('Type', 'النوع')}</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: ${isRTL ? 'right' : 'left'};">${t('Description', 'الوصف')}</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: ${isRTL ? 'right' : 'left'};">${t('Amount', 'المبلغ')}</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: ${isRTL ? 'right' : 'left'};">${t('Balance', 'الرصيد')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${transactionsWithBalance.map(tr => `
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 10px; border: 1px solid #ddd;">${tr.displayDate}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    ${tr.type === 'Opening Balance' ? t('Opening Balance', 'رصيد افتتاحي') : t(tr.type, tr.type === 'Purchase' ? 'شراء' : 'دفع')}
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${tr.description}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; color: ${tr.amount > 0 ? '#e74c3c' : '#27ae60'};">
+                                    ${tr.amount > 0 && !tr.isAdjustment ? '+' : ''}${tr.amount.toFixed(2)}
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${tr.balance.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                        <tr class="total-row" style="background: #ecf0f1; font-weight: bold;">
+                            <td colspan="4" style="padding: 12px; border: 1px solid #ddd; text-align: ${isRTL ? 'left' : 'right'};">${t('Current Balance:', 'الرصيد الحالي:')}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${vendor.credit.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="footer" style="margin-top: 30px; padding: 15px; background: #2c3e50; color: white; text-align: center; border-radius: 6px;">
+                    <p style="margin:5px 0;"><strong>Tashgheel Services</strong> - Powered by itqan solutions</p>
+                    <p style="margin:5px 0;">📧 info@itqansolutions.org | 📱 +201126522373 / +201155253886</p>
+                </div>
+
+                <div class="no-print" style="text-align: center; margin-top: 20px;">
+                    <button onclick="window.print()" class="btn btn-primary" style="padding: 10px 20px;">🖨️ ${t('Print Report', 'طباعة التقرير')}</button>
+                    <button onclick="document.getElementById('reportModal').remove()" class="btn btn-secondary" style="padding: 10px 20px; margin-left: 10px;">${t('Close', 'إغلاق')}</button>
+                </div>
+            </div>
+            
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; direction: ${isRTL ? 'rtl' : 'ltr'}; }
-                .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2c3e50; padding-bottom: 20px; }
-                .header img { max-height: 80px; margin-bottom: 10px; }
-                .header h1 { margin: 10px 0; color: #2c3e50; }
-                .vendor-info { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
-                .vendor-info p { margin: 5px 0; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th { background: #34495e; color: white; padding: 12px; text-align: ${isRTL ? 'right' : 'left'}; }
-                td { border: 1px solid #ddd; padding: 10px; }
-                tr:nth-child(even) { background: #f8f9fa; }
-                .purchase { color: #e74c3c; }
-                .payment { color: #27ae60; }
-                .balance { font-weight: bold; }
-                .total-row { background: #ecf0f1; font-weight: bold; font-size: 1.1em; }
-                .footer { margin-top: 30px; padding: 15px; background: #2c3e50; color: white; text-align: center; border-radius: 6px; }
                 @media print {
-                    .no-print { display: none; }
+                    .no-print { display: none !important; }
+                    body > *:not(#reportModal) { display: none !important; }
+                    #reportModal { 
+                        position: absolute !important; 
+                        top: 0 !important; 
+                        left: 0 !important;
+                        width: 100% !important; 
+                        height: auto !important; 
+                        background: white !important;
+                        overflow: visible !important;
+                        z-index: 999999 !important;
+                    }
                 }
             </style>
-        </head>
-        <body>
-            <div class="header">
-                ${shopLogo ? `<img src="${shopLogo}" alt="Logo">` : ''}
-                <h1>${shopName}</h1>
-                <h2>${t('Vendor Transaction Report', 'تقرير معاملات المورد')}</h2>
-            </div>
-
-            <div class="vendor-info">
-                <h3>${t('Vendor', 'المورد')}: ${vendor.name}</h3>
-                <p><strong>${t('Contact', 'جهة الاتصال')}:</strong> ${vendor.contact || 'N/A'}</p>
-                <p><strong>${t('Phone', 'الهاتف')}:</strong> ${vendor.phone || 'N/A'}</p>
-                <p><strong>${t('Report Date', 'تاريخ التقرير')}:</strong> ${new Date().toLocaleDateString()}</p>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>${t('Date', 'التاريخ')}</th>
-                        <th>${t('Type', 'النوع')}</th>
-                        <th>${t('Description', 'الوصف')}</th>
-                        <th>${t('Amount', 'المبلغ')}</th>
-                        <th>${t('Balance', 'الرصيد')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${transactionsWithBalance.map(tr => `
-                        <tr>
-                            <td>${tr.displayDate}</td>
-                            <td class="${tr.type.toLowerCase()}">${t(tr.type, tr.type === 'Purchase' ? 'شراء' : 'دفع')}</td>
-                            <td>${tr.description}</td>
-                            <td class="${tr.type === 'Purchase' ? 'purchase' : 'payment'}">
-                                ${tr.type === 'Purchase' ? '+' : ''}${tr.amount.toFixed(2)}
-                            </td>
-                            <td class="balance">${tr.balance.toFixed(2)}</td>
-                        </tr>
-                    `).join('')}
-                    <tr class="total-row">
-                        <td colspan="4" style="text-align: ${isRTL ? 'left' : 'right'};">${t('Current Balance:', 'الرصيد الحالي:')}</td>
-                        <td class="balance">${vendor.credit.toFixed(2)}</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="footer">
-                <p><strong>Tashgheel Services</strong> - Powered by itqan solutions</p>
-                <p>📧 info@itqansolutions.org | 📱 +201126522373 / +201155253886</p>
-            </div>
-
-            <div class="no-print" style="text-align: center; margin-top: 20px;">
-                <button onclick="window.print()" style="padding: 10px 20px; font-size: 1.1em; cursor: pointer;">🖨️ ${t('Print Report', 'طباعة التقرير')}</button>
-                <button onclick="window.close()" style="padding: 10px 20px; font-size: 1.1em; cursor: pointer; margin-left: 10px;">${t('Close', 'إغلاق')}</button>
-            </div>
-        </body>
-        </html>
+        </div>
     `;
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(reportHTML);
-    printWindow.document.close();
+    document.body.insertAdjacentHTML('beforeend', reportHTML);
 }
 
 function closeModal(id) {

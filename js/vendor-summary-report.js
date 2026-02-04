@@ -1,4 +1,5 @@
 // Vendor Summary Report Logic
+window.currentPage = 'vendors';
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.isSessionValid()) {

@@ -37,14 +37,16 @@ function renderNavigation(activePage) {
     const t = navigationTranslations[lang];
 
     const navItems = [
-        { page: 'visits', label: t.service_visits, href: 'visits.html' },
-        { page: 'vendors', label: t.vendors, href: 'vendors.html' },
+        { page: 'pos', label: '🛒 POS', href: 'pos.html' },
+        { page: 'menu', label: '🍔 Menu', href: 'products.html' }, // Products = Menu Items
+        { page: 'inventory', label: '🥩 Inventory', href: 'inventory.html' }, // Raw Materials
         { page: 'customers', label: t.customers, href: 'customers.html' },
-        { page: 'products', label: t.spare_parts, href: 'products.html' },
+        { page: 'orders', label: '👩‍🍳 Kitchen', href: 'kitchen.html' }, // Placeholder
+        { page: 'vendors', label: t.vendors, href: 'vendors.html' },
+        { page: 'expenses', label: t.expenses, href: 'expenses.html' },
+        { page: 'salesmen', label: t.employees, href: 'salesmen.html' },
         { page: 'receipts', label: t.receipts, href: 'receipts.html' },
         { page: 'reports', label: t.reports, href: 'reports.html' },
-        { page: 'salesmen', label: t.employees, href: 'salesmen.html' },
-        { page: 'expenses', label: t.expenses, href: 'expenses.html' },
         { page: 'admin', label: t.admin_panel, href: 'admin.html' },
         { page: 'backup', label: t.backup, href: 'backup.html' }
     ];

@@ -17,37 +17,9 @@
   <div class="app">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2>Tashgheel Services</h2>
+        <h2>Restaurant POS</h2>
       </div>
-      <nav>
-        <a href="visits.html" class="nav-item" data-i18n-key="nav_visits" data-i18n-ar="🔧 زيارات الخدمة">🔧 Service
-          Visits</a>
-        <a href="vendors.html" class="nav-item" data-i18n-key="nav_vendors" data-i18n-ar="🏪 الموردين">🏪 Vendors</a>
-        <a href="customers.html" class="nav-item" data-i18n-key="nav_customers" data-i18n-ar="👥 العملاء">👥
-          Customers</a>
-        <a href="products.html" class="nav-item" data-i18n-key="nav_products" data-i18n-ar="📦 قطع الغيار">📦 Spare
-          Parts</a>
-        <a href="receipts.html" class="nav-item active" data-i18n-key="nav_receipts" data-i18n-ar="🧾 الفواتير">🧾
-          Receipts</a>
-        <a href="reports.html" class="nav-item" data-i18n-key="nav_reports" data-i18n-ar="📈 التقارير">📈 Reports</a>
-        <a href="salesmen.html" class="nav-item" data-i18n-key="nav_salesmen" data-i18n-ar="👔 الموظفين">👔
-          Employees</a>
-        <a href="expenses.html" class="nav-item" data-i18n-key="nav_expenses" data-i18n-ar="💰 المصاريف">💰 Expenses</a>
-        <a href="admin.html" class="nav-item" data-i18n-key="nav_admin" data-i18n-ar="⚙️ لوحة التحكم">⚙️ Admin Panel</a>
-        <a href="backup.html" class="nav-item" data-i18n-key="nav_backup" data-i18n-ar="💾 النسخ الاحتياطي">💾
-          Backup</a>
-        <a href="#" onclick="if(confirm('Logout?')) window.logout();" class="nav-item" data-i18n-key="logout"
-          data-i18n-ar="🚪 تسجيل الخروج">🚪 Logout</a>
-      </nav>
-      <div class="sidebar-footer"
-        style="text-align:center; padding:15px; font-size:0.85em; border-top:1px solid #34495e;">
-        <strong>Tashgheel Services</strong><br>
-        <small style="color:#95a5a6;">powered by itqansolutions © 2025</small><br>
-        <small style="color:#95a5a6;">
-          📧 info@itqansolutions.org<br>
-          📱 +201126522373 / +201155253886
-        </small>
-      </div>
+      <nav><!-- Populated by shared-nav.js --></nav>
     </aside>
 
     <main class="main-content">
@@ -117,6 +89,8 @@
 
   <script src="js/auth.js"></script>
   <script src="js/db.js"></script>
+  <script>window.currentPage = 'receipts';</script>
+  <script src="js/shared-nav.js"></script>
   <script src="js/translations.js"></script>
   <script src="js/receipts-app.js"></script>
 </body>
